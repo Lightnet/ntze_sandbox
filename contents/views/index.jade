@@ -1,0 +1,50 @@
+extends layout
+
+block content
+  div(id="scenerender")
+  div(id="container")
+  div(id="basepanel")
+    div(id="iconpowerbtn",style='width: 24px;height: 24px;',onclick='$( "#dialog-login" ).dialog("open");')
+    a(id="btnlogin",onclick='$("#dialog-login" ).dialog("open");',href='#') Login
+    //a(onclick='$("" ).dialog("open");',href='#') Unit Info.
+    //a(onclick='$("" ).dialog("open");',href='#') Research
+    //a(onclick='$("" ).dialog("open");',href='#') Tech Tree
+    //a(onclick='$("" ).dialog("open");',href='#') Base
+    //a(onclick='$("" ).dialog("open");',href='#') Map
+    //a(onclick='$("" ).dialog("open");',href='#') Galaxy
+    //a(id="btndatabase",href='#',onclick='showbotdatabase();$("#dialog-botaidatabase" ).dialog("open");') Database
+    //a(id="btnproperties",href='#',onclick='showbotproperties();$("#dialog-botaiproperties" ).dialog("open");') Properties
+    //a(id="btnscripts",href='#',onclick='$("#dialog-uiscript" ).dialog("open");') Scripts
+    //a(id="btnconfig",href='#',onclick='$("#dialog-uiconfig" ).dialog("open");') Config
+  div(id="content_nav")
+  div(id="content_main")
+  div(id="subcontent")  
+  div(id="content_hide")
+
+  div(id="dialog-login",title="Login Access")
+    form
+        label User
+        input(id="loginuser", type="text", name="username", value="guest")
+        br
+        label Pass
+        input(id="loginpass", type="text", name="userpass", value="guest")
+        br
+        a(onclick="LoginAction();",href="#") Login 
+        a(onclick='$( "#dialog-forgot" ).dialog("open");',href="#") Forgot 
+        a(onclick='$( "#dialog-register" ).dialog("open");',href="#") Register 
+  div(id="dialog-forgot",title="Forgot Access")
+    form
+        label User
+        input(id="forgotusers", type="text", name="forgotusers", value="guest")
+        br
+        label Email
+        input(id="forgotemail", type="text", name="forgotemail", value="guest")
+        br
+        a(onclick="ForgotAction();",href="#") Send 
+  div(id="dialog-message")
+    p No Message.
+  div(id="dialog-logout")
+    p User has logout!
+  div(id="dialog-connecting")
+    p Connecting...
+  //script(type='text/javascript', src='js/gamescene.js')

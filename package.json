@@ -1,0 +1,27 @@
+{
+  "name": "Node turbulenz",
+  "description": "turbulenz game build.",
+  "version": "0.0.1",
+  "main": "public/../index.html",
+  "window": {
+	"frame":true,
+    "toolbar": true,
+    "width": 600,
+    "height": 480
+  },
+  "dependencies": {
+    "express": "latest",
+    "async": "latest",
+    "connect": "latest",
+    "cookie": "latest",
+    "socket.io":"latest",
+	"cloneextend":"latest",
+	"socket.io-client":"latest",
+	"mongodb":"latest",
+	"mongoskin":"latest",
+	"jade":"latest"
+  },
+  "engines": {
+    "node": "0.10.x"
+  }
+}

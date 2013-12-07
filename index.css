@@ -1,0 +1,39 @@
+body {
+	padding:0px 0px 0px 0px;
+	margin-top:0px;
+	margin-top:0px;
+	margin-right:0px;
+	margin-left:0px;
+	width:100%;
+	overflow:hidden;
+}
+
+#serverheader 
+{	
+	padding:0px 0px 0px 0px;
+	margin-top:0px;
+	margin-top:0px;
+	margin-right:0px;
+	margin-left:0px;
+	background-color:#00FFFF;
+	width:100%;
+	#-webkit-user-select: none;
+	-webkit-app-region: drag;
+}
+
+#nodrag 
+{	
+	float:right;
+	-webkit-app-region: no-drag
+}
+/* -webkit-app-region: no-drag */
+#term_serverconsole{
+	position:absolute;
+	bottom:20px;
+}
+
+#consoletoggle {
+	position:absolute;
+	bottom:0;
+	
+}

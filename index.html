@@ -1,0 +1,90 @@
+<html>
+<head>
+	<script>
+	//var gui = global.window.nwDispatcher.requireNwGui();
+	var gui = require('nw.gui');
+	//gui.Window.get();
+	//gui.Window.get().toggleFullscreen();
+	
+	function ShowDevTools(){
+		gui.Window.get().showDevTools(); 	
+	}
+	
+	function minimize(){
+		gui.Window.get().minimize(); 	
+	}
+	
+	function ConsoleToggleButton(){
+		console.log("console hide?");
+		if($('#term_serverconsole').is(":visible")){
+			$('#term_serverconsole').terminal().focus(false);
+			$('#term_serverconsole').hide();
+		}else{
+			$('#term_serverconsole').terminal().focus(true);
+			$('#term_serverconsole').show();
+		}
+	}
+	
+	
+	
+	</script>
+    <title>Turbulenz - API - Sandbox</title>
+	<script src="public/js/knockout-2.3.0.js"></script>
+	
+    <script src="nodejsserver.js"></script>
+	<link rel="stylesheet" type="text/css" href="public/css/pure-min.css">
+	<link rel="stylesheet" type="text/css" href="index.css">
+	<link rel="stylesheet" type="text/css" href="public/css/jquery-ui-1.10.3.custom.min.css">
+	<link rel="stylesheet" type="text/css" href="public/css/jquery.terminal.css">
+	<script src="public/js/jquery-1.9.1.js"></script>
+	<script src="public/js/jquery-ui-1.10.3.custom.min.js"></script>
+	<script src="public/js/jquery.terminal-0.7.7.min.js"></script>
+	<script src="public/console_server.js"></script>	
+</head>
+<body>
+	<div class="pure-menu pure-menu-open pure-menu-horizontal">
+		<div id="serverheader" class="pure-menu-heading">Server App
+		<div id="nodrag">
+		<button class="pure-button pure-button" style="float:right;font-size: 70%;" href="#">x</button>
+		<button class="pure-button pure-button" style="float:right;font-size: 70%;" href="#" onclick="minimize();">_</button>
+		<button class="pure-button pure-button" style="float:right;font-size: 70%;" href="#" onclick="location.reload();">Refresh</button>
+		<button class="pure-button pure-button" style="float:right;font-size: 70%;" href="#" onclick="ShowDevTools();">Debug</button>
+		</div>
+		</div>
+	</div>
+	<div class="pure-menu pure-menu-open pure-menu-horizontal">
+		<ul>
+		<li><a style="float:right;font-size: 70%;" href="http://127.0.0.1:8080" target="_blank">Launch Client</a></li>
+		<strong id="serverstate">
+		<li><a  style="float:right;font-size: 70%;" href="#" >Home</a></li>
+		<li><a  style="float:right;font-size: 70%;" href="#" >Config</a></li>
+		
+		<li><a  style="float:right;font-size: 70%;" data-bind="text:state, click:oncheck" href="#" >Status</a></li>
+		<li><a  style="float:right;font-size: 70%;" data-bind="text:usersonline, click:oncheck" href="#" >usersonline</a></li>
+		
+		<!--li><a href="#" target="_blank">Status</a></li-->
+		<li><!--a href="#" target="_blank">Console</a--></li>
+		
+		</strong>
+		</ul>		
+	</div>
+	<!--
+	<div style="float:right;font-size: 70%;" id="config_area">
+		<form class="pure-form" action="demo_form.asp">
+		<label>Server Config</label> <br>
+		<label>Server IP:</label> <input type="text" name=""><br>
+		<label>Server Port</label> <input type="text" name=""><br>
+		<label>Database</label><br>
+		<label>Database Type:</label> <input type="text" name=""><br>
+		<label>Database Host:</label> <input type="text" name=""><br>
+		<label>Database Port:</label> <input type="text" name=""><br>
+		<label>Admin</label><br>
+		<label>Admin</label> <input type="text" name=""><br>
+		</form>
+	</div>
+	-->
+	
+	<div id="term_serverconsole"></div>
+	<div id="consoletoggle" class="pure-button pure-button" style="float:right;font-size: 70%;" onclick="ConsoleToggleButton();" >Console</div>
+</body>
+</html>
