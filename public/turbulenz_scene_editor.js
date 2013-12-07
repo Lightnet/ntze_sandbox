@@ -65,6 +65,7 @@ TurbulenzEngine.onload = function onloadFn() {
 	var cameraController;
 	var renderer;
 	var scene;
+	var nodeRoot;
 	var dscene;
 	var draw2D;
 	
@@ -143,6 +144,17 @@ TurbulenzEngine.onload = function onloadFn() {
 	var chSemantics;
 	
 	var boxBodies = [];
+	var contactWorldTransform;
+	var contactWorldPoint;
+    var contacts = [];
+	
+	// The objects needed to draw the contact callbacks
+    var contactsTechnique;
+    var contactsShader;
+    var contactsTechniqueParameters;
+    var contactsSemantics;
+    var contactsFormats;
+	
 	//}
 	
 	function onIntializedFn(protolib){
@@ -156,6 +168,14 @@ TurbulenzEngine.onload = function onloadFn() {
 		graphicsDevice = protolib.getGraphicsDevice();		
 		chSemantics = graphicsDevice.createSemantics(['POSITION']);
 		chFormats = [graphicsDevice.VERTEXFORMAT_FLOAT3];
+		contactWorldTransform = mathDevice.m43BuildIdentity();
+		contactWorldPoint = mathDevice.v3BuildZero();
+		contactsSemantics = graphicsDevice.createSemantics([
+			'POSITION'
+		]);
+		contactsFormats = [
+			graphicsDevice.VERTEXFORMAT_FLOAT3
+		];
 		
 		if (!graphicsDevice.shadingLanguageVersion) {
 			//errorCallback("No shading language support detected.\nPlease check your graphics drivers are up to date.");
@@ -230,9 +250,18 @@ TurbulenzEngine.onload = function onloadFn() {
 			v3Color: mathDevice.v3Build(1, 1, 1),
 			radius: 10
 		});
-
+			
 		camera = protolib.globals.camera;
 		scene = protolib.globals.scene;
+		var parm = {
+			name: "worldscene"
+			//local: startPoint,
+			//dynamic: true,
+			//disabled: false
+		};
+		//nodeRoot = SceneNode.create(parm);
+		//scene.addRootNode(nodeRoot);
+		
 		cameraController = CameraController.create(graphicsDevice, inputDevice, camera);
 		
 		// Function for aspect ratio
@@ -253,7 +282,6 @@ TurbulenzEngine.onload = function onloadFn() {
 		mathDevice.m43SetAxisRotation(rotationAngleMatrix,
 									  mathDevice.v3Build(0, 1, 0),
 									  (Math.PI * 2) / 360);
-		
 		
 		//===========================================================
 		// Input functions
@@ -346,6 +374,7 @@ TurbulenzEngine.onload = function onloadFn() {
 					scene.drawPhysicsNodes(graphicsDevice, shaderManager, camera, physicsManager);
 					scene.drawPhysicsGeometry(graphicsDevice, shaderManager, camera, physicsManager);
 					//console.log("setPreDraw");
+					drawContacts();
 				}
 			}
 		});
@@ -381,7 +410,66 @@ TurbulenzEngine.onload = function onloadFn() {
 		//===========================================================
 		CreateObjects();
 		CreateBoxShape();
+	};
+	
+	var idxobj = 0;
+	
+	SpawnMesh = function(){
+		var spawnmesh =  protolib.loadMesh({mesh: "models/duck.dae"});
+		spawnmesh.setPosition(mathDevice.v3Build(Math.floor((Math.random()*10)+1), Math.floor((Math.random()*10)+1), Math.floor((Math.random()*10)+1)));
+		console.log(spawnmesh);
 	}
+	
+	CreatePhysicsCube = function(){
+		idxobj += 1;
+		var margin = 0.001;
+		
+		var lodmesh = protolib.loadMesh({mesh: "models/duck.dae"});
+		lodmesh.setPosition(mathDevice.v3Build(0, -.5, 0));//off set
+		
+		var halfExtents = mathDevice.v3Build(0.5, 0.5, 0.5);
+		var position = mathDevice.m43BuildTranslation(0, 5, 0);//starting position
+	
+		var shape = physicsDevice.createBoxShape({
+            halfExtents: halfExtents,
+            margin: margin
+        });
+	
+		function newPhysicsNode(name, _shape, offsetTransform, pos) {
+            
+            var duckPhys = SceneNode.create({
+                name: name + "Phys" + idxobj,
+                local: pos,
+                dynamic: true,
+                disabled: false
+            });
+            var rigidBody = physicsDevice.createRigidBody({
+                shape: _shape,
+                mass: mass,
+                inertia: mathDevice.v3ScalarMul(_shape.inertia, mass),
+                transform: pos,
+                friction: 0.7,
+                restitution: 0.2,
+                angularDamping: 0.4
+            });
+            var physicsNode = {
+                body: rigidBody,
+                target: duckPhys,
+                dynamic: true
+            };
+            scene.addRootNode(duckPhys);
+            duckPhys.addChild(lodmesh.node);
+            duckPhys.physicsNodes = [
+                physicsNode
+            ];
+            duckPhys.setDynamic();
+            physicsManager.physicsNodes.push(physicsNode);
+            physicsManager.dynamicPhysicsNodes.push(physicsNode);
+            physicsManager.enableHierarchy(duckPhys, true);
+        }
+		
+		newPhysicsNode("DuckBox", shape, mathDevice.m43BuildIdentity(), position);
+	};
 	
 	function CreateObjects(){
 		var margin = 0.001;
@@ -389,33 +477,36 @@ TurbulenzEngine.onload = function onloadFn() {
 		//
 		//===========================================================
 		mesh = protolib.loadMesh({mesh: "models/duck.dae"});
-		console.log(mesh);
+		mesh.setPosition(mathDevice.v3Build(0, -.5, 0));
 		
-		mesh.setPosition(mathDevice.v3Build(0, 2, 0));
-		//console.log(mesh);
-		console.log(scene);
-		console.log("=========================");
-		console.log("=========================");
-		var cmesh = scene.findNode("models/duck.dae0");
-		//console.log(cmesh);
-		
-		var halfExtents = mesh.localTransform;
-		var position = mathDevice.m43BuildTranslation(5, halfExtents[1], 0);
-		//console.log(cmesh);
-		var duckMesh = cmesh.clone("duck" + "Geom");
-		
+		var halfExtents = mathDevice.v3Build(0.5, 0.5, 0.5);
+		var position = mathDevice.m43BuildTranslation(0, 5, 0);
+		//var position = mesh.localTransform;
 		var shape = physicsDevice.createBoxShape({
             halfExtents: halfExtents,
             margin: margin
         });
 		
-		//var offsetTransform = mathDevice.m43BuildIdentity();
 		function newPhysicsNode(name, shape, offsetTransform, pos) {
-            var duckGeom = duckMesh.clone(name + "Geom");
-			console.log(duckGeom);
+            //var duckGeom = duckMesh.clone(name + "Geom");
+			//console.log(duckGeom);
             //physicsManager.deletePhysicsNode(duckGeom.physicsNodes[0]);
-            duckGeom.physicsNodes = [];
-            duckGeom.setLocalTransform(offsetTransform);
+            //duckGeom.physicsNodes = [];
+            //mesh.setLocalTransform(offsetTransform);
+			console.log(scene);
+			var duckMesh0 = scene.findNode("models/duck.dae0");
+			console.log(duckMesh0);
+			//duckMesh0.setPosition(mathDevice.v3Build(0, 4, 0));
+			
+			
+			var clonemesh = duckMesh0.clone("models/duck.dae1");
+			console.log(clonemesh);
+			protolib.globals.scene.addRootNode(clonemesh);
+			clonemesh.update();
+			//scene.findNode
+			
+			mesh.node.physicsNodes = [];
+			
             var duckPhys = SceneNode.create({
                 name: name + "Phys",
                 local: pos,
@@ -437,7 +528,8 @@ TurbulenzEngine.onload = function onloadFn() {
                 dynamic: true
             };
             scene.addRootNode(duckPhys);
-            duckPhys.addChild(duckGeom);
+            //duckPhys.addChild(duckGeom);
+            duckPhys.addChild(mesh.node);
             duckPhys.physicsNodes = [
                 physicsNode
             ];
@@ -447,7 +539,8 @@ TurbulenzEngine.onload = function onloadFn() {
             physicsManager.enableHierarchy(duckPhys, true);
         }
 		newPhysicsNode("DuckBox", shape, mathDevice.m43BuildIdentity(), position);
-	}
+		
+	};
 	
 	function CreateBoxShape(){
 		var floorShape = physicsDevice.createPlaneShape({
@@ -462,13 +555,16 @@ TurbulenzEngine.onload = function onloadFn() {
 			restitution: 0.1,
 			group: physicsDevice.FILTER_STATIC,
 			mask: physicsDevice.FILTER_ALL,
-			//onProcessedContacts: addContacts //onPreSolveContact : addContact,
+			onProcessedContacts: addContacts //onPreSolveContact : addContact,
 			//onAddedContacts : addContacts
 		});
 		//onRemovedContacts : addContacts
 		// Adds the floor collision object to the world
 		dynamicsWorld.addCollisionObject(floorObject);
 
+		//=================================================
+		//cube
+		//=================================================
 		var cubeExtents = mathDevice.v3Build(0.5, 0.5, 0.5);
 		var boxShape = physicsDevice.createBoxShape({
 			halfExtents: cubeExtents,
@@ -500,14 +596,15 @@ TurbulenzEngine.onload = function onloadFn() {
             newBox.physicsNodes = [
                 physicsNode
             ];
-        //scene.addRootNode(newBox);
-		//protolib.globals.scene.addRootNode(newBox);
 		
 		newBox.setDynamic();
 		physicsManager.physicsNodes.push(physicsNode);
         physicsManager.dynamicPhysicsNodes.push(physicsNode);
 		physicsManager.enableHierarchy(newBox, true);
 		scene.addRootNode(newBox);
+		//=================================================
+		//=================================================
+		
 	}
 	
 	function addContacts(objectA, objectB, pairContacts) {
@@ -532,17 +629,13 @@ TurbulenzEngine.onload = function onloadFn() {
                 numContacts += 1;
             }
         }
-    }
+    };
 	
 	function drawCrosshair() {
         if(!mouseForces.pickedBody) {
 			var screenWidth = graphicsDevice.width;
             var screenHeight = graphicsDevice.height;
-			/*
-            graphicsDevice.setTechnique(technique2d);
-            techniqueParameters2d.clipSpace = mathDevice.v4Build(2.0 / screenWidth, -2.0 / screenHeight, -1.0, 1.0);
-            graphicsDevice.setTechniqueParameters(techniqueParameters2d);
-			*/
+			
 			//console.log(technique2d);
 			if(technique2d !=null){
 				//console.log("draw 2d");
@@ -584,14 +677,17 @@ TurbulenzEngine.onload = function onloadFn() {
 	
 	function drawContacts() {
 		if (numContacts) {
-			//graphicsDevice.setTechnique(contactsTechnique);
-
-			//contactsTechniqueParameters.worldViewProjection = camera.viewProjectionMatrix;
-			//graphicsDevice.setTechniqueParameters(contactsTechniqueParameters);
-
+			
+			if(contactsTechnique !=null){
+				graphicsDevice.setTechnique(contactsTechnique);
+				contactsTechniqueParameters.worldViewProjection = camera.viewProjectionMatrix;
+				graphicsDevice.setTechniqueParameters(contactsTechniqueParameters);
+			}
+			
 			var writer = graphicsDevice.beginDraw(graphicsDevice.PRIMITIVE_LINES, numContacts * 2, contactsFormats, contactsSemantics);
 
 			if (writer) {
+				//consoel.log("draw contact...");
 				var n;
 				for (n = 0; n < numContacts; n += 1) {
 					var contact = contacts[n];
@@ -622,8 +718,6 @@ TurbulenzEngine.onload = function onloadFn() {
             deltaTime = 0.1;
         }
 		
-		
-		
 		inputDevice.update();
 		
 		if(mouseForces.pickedBody) {
@@ -648,7 +742,7 @@ TurbulenzEngine.onload = function onloadFn() {
         physicsManager.update();
 		DrawText("scene rootNodes: "+scene.rootNodes.length,50,10);
 		DrawText("physics Nodes: "+physicsManager.physicsNodes.length,50,30);
-		
+		//drawContacts();
 		//scene.update();
 		//renderer.update(graphicsDevice, camera, dscene, currentTime);
 		if (protolib.beginFrame()){
@@ -658,14 +752,17 @@ TurbulenzEngine.onload = function onloadFn() {
 			draw2D.draw(drawObject);
 			//draw2D.drawSprite(sprite);
 			drawCrosshair();
+			//drawContacts();
 			draw2D.end();
 		}
 		
+		/*
 		if (mesh){
 			mesh.getRotationMatrix(rotationMatrix);
 			mathDevice.m43Mul(rotationMatrix, rotationAngleMatrix, rotationMatrix);
 			mesh.setRotationMatrix(rotationMatrix);
 		}
+		*/
 			
 		//console.log("loops?");
 	};
@@ -673,15 +770,23 @@ TurbulenzEngine.onload = function onloadFn() {
 	//===========================================
 	// Public Access Start
 	//===========================================
-	// For map editing 
+	// For map editing	
 	
-	DebugToggle = function (){
+	DebugToggle = function(){
 		console.log(debugMode);
+		console.log("====");
+		console.log(scene);
+		console.log("====");
 		if (debugMode == true){
 			debugMode = false;
 		}else{
 			debugMode = true;
 		}
+	};
+	
+	DFunScene = function(){
+		console.log(scene);
+		//console.log("test");
 	};
 	
 	HideMeshTest = function(){
@@ -701,10 +806,12 @@ TurbulenzEngine.onload = function onloadFn() {
 		intervalID = TurbulenzEngine.setInterval(update, 1000 / 60);	
 	};
 	
+	/*
 	End_Frame = function (){
 		TurbulenzEngine.clearInterval(intervalID);
 		console.log("end frame");
 	};
+	*/
 	
 	//===========================================
 	// Public Access End
