@@ -21,8 +21,8 @@ window.onload = function ()
 		{
 			TurbulenzEngine = WebGLTurbulenzEngine.create({
 				//canvas: document.getElementById("canvas"),
-				canvas: canvas,
-				fillParent: true
+				canvas: canvas
+				//fillParent: true
 			});
 
 			if (!TurbulenzEngine) {

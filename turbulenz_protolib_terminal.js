@@ -38,24 +38,6 @@ $(function() {
 				
 				var textinfp = "";
 				textinfp += helptext;
-				
-				/*
-				textinfp += "[[gib;#FFFFFF;#000]say] ";
-				textinfp += "[[gib;#FFFFFF;#000]local], ";
-				textinfp += "[[gib;#FF6600;#000]shout], ";
-				textinfp += "[[gib;#FF7700;#000]world], ";
-				
-				textinfp += "[[gib;#99FF66;#000]clan], ";
-				textinfp += "[[gib;#00CCFF;#000]team], ";
-				textinfp += "[[gib;#993399;#000]pm], ";
-				textinfp += "[[gib;#00CCFF;#000]party], ";
-				
-				textinfp += "[[gib;#FF0000;#000]admin], ";
-				textinfp += "[[gib;#FF9999;#000]gm], ";
-				
-				textinfp += "test ";
-				*/
-				//helptext = textinfp;
 				term.echo(textinfp);
 			}
 			if(command == 'team'){
@@ -85,18 +67,7 @@ $(function() {
 			}
 			
 			if(command == 'psl'){
-				//console.log(protolib.globals.scene.rootNodes.length);
-				//console.log(protolib.globals.scene.rootNodes);
-				
 				console.log(protolib.globals.scene);
-				
-				//var clone = protolib.globals.scene.rootNodes[1].clone();
-				//console.log(clone);
-				//clone.position.set(0,0,1);
-				//clone.setLocation(0,0,0);
-				//console.log(clone.position);
-				//protolib.globals.scene.rootNodes.push(clone);
-				
 				term.echo(protolib.globals.scene.rootNodes);
 			}
 			
@@ -134,7 +105,6 @@ $(function() {
 					//turbulenz_app.End_Frame();
 					//if(turbulenz_app.DebugToggle !=null){
 						turbulenz_app.DebugToggle();
-
 					//}
 				}
 			}
@@ -145,8 +115,6 @@ $(function() {
 				}
 			}
 			
-			
-			
 			if (command !== '') {
 				//var result = window.eval(command);
 				//if (result != undefined) {
@@ -154,8 +122,6 @@ $(function() {
 				//}
 			}
 			
-			//var args = Array.prototype.slice.call(command, " ");
-			//var args = Array.prototype.slice.call(command,2);
 			var args = command.split(" ");
 			console.log(args);
 			//console.log(args.join(" "));
@@ -176,9 +142,6 @@ $(function() {
 				}
 			}
 			
-			
-			
-			
 		},
 		{
 			greetings: '[[[gib;#00FFFF;#000]Welcome to Console]] [[[gib;#00FFFF;#000]type help for commands]]',
@@ -190,7 +153,7 @@ $(function() {
 	
 	$('#term_console').terminal().echo(helptext);
 	//$('#term_console').terminal().echo("ldkfjsldkjfl");
-	//$('#term_console').hide();
+	$('#term_console').hide();
 	Mousetrap.bind('`', function() { 
 		//console.log('`'); 		
 		if($('#term_console').is(":visible")){
