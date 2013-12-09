@@ -17,6 +17,7 @@
 - textures/testbutton128x32gray_over.png
 - textures/duck.png
 - textures/default_light.png
+- textures/hero_0.dds
 - shaders/generic2D.cgfx
 - shaders/shadowmapping.cgfx
 - shaders/zonly.cgfx
@@ -26,6 +27,7 @@
 - shaders/defaultrendering.cgfx
 - shaders/font.cgfx
 - shaders/simplesprite.cgfx
+- fonts/hero.fnt
 - fonts/opensans-8.fnt
 - fonts/opensans-16.fnt
 - fonts/opensans-32.fnt

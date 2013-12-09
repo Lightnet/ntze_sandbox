@@ -20,6 +20,7 @@ window.onload = function ()
 		if (canvas.getContext && canvasSupported)
 		{
 			TurbulenzEngine = WebGLTurbulenzEngine.create({
+				//canvas: document.getElementById("canvas"),
 				canvas: canvas
 				//fillParent: true
 			});
