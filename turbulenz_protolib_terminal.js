@@ -109,9 +109,21 @@ $(function() {
 				}
 			}
 			
-			if((command == 'dscene')){
+			if((command == 'scene')){
 				if(turbulenz_app !=null){
-						turbulenz_app.DFunScene();
+						turbulenz_app.ShowSceneFuns();
+				}
+			}
+			
+			if((command == 'shader')){
+				if(turbulenz_app !=null){
+						turbulenz_app.Showshader();
+				}
+			}
+			
+			if((command == 'shader2d')){
+				if(turbulenz_app !=null){
+						turbulenz_app.Showshader2d();
 				}
 			}
 			
@@ -138,6 +150,12 @@ $(function() {
 				if(args[1] == "mesh"){
 					if(turbulenz_app !=null){
 						turbulenz_app.SpawnMesh();
+					}
+				}
+				
+				if(args[1] == "duck"){
+					if(turbulenz_app !=null){
+						turbulenz_app.CloneMeshDuck();
 					}
 				}
 			}

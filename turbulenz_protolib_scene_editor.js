@@ -2,6 +2,15 @@
  * Work in progress prototype.
 */
 
+/*
+
+mesh = protolib.loadMesh({mesh: "models/duck.dae"});
+var clonemesh =  mesh.node.clone("clonemesh");
+//will not work right after cloning. It has to wait until it fully loaded.
+
+
+*/
+
 /*{{ javascript("jslib/aabbtree.js") }}*/
 /*{{ javascript("jslib/camera.js") }}*/
 /*{{ javascript("jslib/floor.js") }}*/
@@ -51,7 +60,8 @@
 /*global HTMLControls: false */
 
 TurbulenzEngine.onload = function onloadFn() {
-	console.log(TurbulenzEngine);
+	//console.log(TurbulenzEngine);
+	console.log("TurbulenzEngine version: "+TurbulenzEngine.version);
 	//{
 	var intervalID;
 	//intervalID = TurbulenzEngine.setInterval(update, 1000 / 60);
@@ -66,7 +76,7 @@ TurbulenzEngine.onload = function onloadFn() {
 	var renderer;
 	var scene;
 	var nodeRoot;
-	var dscene;
+	//var dscene;
 	var draw2D;
 	
 	var mathDevice = null;
@@ -100,8 +110,8 @@ TurbulenzEngine.onload = function onloadFn() {
 	
 	var protolib;
 	
-	var gameWidth = 1920;
-	var gameHeight = 1080;
+	//var gameWidth = 1920;
+	//var gameHeight = 1080;
 	
 	var clearColor = [0.95, 0.95, 1.0, 1.0];
 	var floor;
@@ -112,9 +122,9 @@ TurbulenzEngine.onload = function onloadFn() {
 	var keyCodes;
 	var mouseCodes;
 	
-	var technique2d;
-	var shader2d;
 	var techniqueParameters2d;
+	var technique2d;
+	
 	
 	var debugMode = true;
 	
@@ -154,6 +164,8 @@ TurbulenzEngine.onload = function onloadFn() {
     var contactsTechniqueParameters;
     var contactsSemantics;
     var contactsFormats;
+	var shader;
+	var shader2d;
 	
 	//}
 	
@@ -162,10 +174,27 @@ TurbulenzEngine.onload = function onloadFn() {
 		//console.log(version);
 		//console.log(protolib);
 		mathDevice = protolib.getMathDevice();
+		graphicsDevice = protolib.getGraphicsDevice();
+		inputDevice = protolib.getInputDevice();
+		textureManager = protolib.globals.textureManager;
+		shaderManager = protolib.globals.shaderManager;
+		//console.log(protolib);
+		effectManager = protolib.globals.EffectManager;
+		//sceneLoader = SceneLoader.create();
+		sceneLoader = protolib.globals.simplesceneloader;//SceneLoader.create();
+		//console.log(sceneLoader);
+		physicsDevice = TurbulenzEngine.createPhysicsDevice(physicsDeviceParameters);
+		dynamicsWorld = physicsDevice.createDynamicsWorld(dynamicsWorldParameters);
+		physicsManager = PhysicsManager.create(mathDevice, physicsDevice, dynamicsWorld);
+		renderer = protolib.globals.renderer;
+		
+		camera = protolib.globals.camera;
+		scene = protolib.globals.scene;
+		
 		cubeExtents = mathDevice.v3Build(0.5, 0.5, 0.5);
 		m43MulM44 = mathDevice.m43MulM44;
 		isVisibleBoxOrigin = mathDevice.isVisibleBoxOrigin;
-		graphicsDevice = protolib.getGraphicsDevice();		
+		
 		chSemantics = graphicsDevice.createSemantics(['POSITION']);
 		chFormats = [graphicsDevice.VERTEXFORMAT_FLOAT3];
 		contactWorldTransform = mathDevice.m43BuildIdentity();
@@ -177,45 +206,59 @@ TurbulenzEngine.onload = function onloadFn() {
 			graphicsDevice.VERTEXFORMAT_FLOAT3
 		];
 		
-		if (!graphicsDevice.shadingLanguageVersion) {
+		//if (!graphicsDevice.shadingLanguageVersion) {
 			//errorCallback("No shading language support detected.\nPlease check your graphics drivers are up to date.");
-			console.log("No shading language support detected.\nPlease check your graphics drivers are up to date.");
-			graphicsDevice = null;
-			return;
-		}
+			//console.log("No shading language support detected.\nPlease check your graphics drivers are up to date.");
+			//graphicsDevice = null;
+			//return;
+		// }
 		
 		// Clear the background color of the engine window
 		//var clearColor = [0.95, 0.95, 1.0, 1.0];
-		if (graphicsDevice.beginFrame()) {
-			graphicsDevice.clear(clearColor);
-			graphicsDevice.endFrame();
-		}
-		console.log("Manager");
-		inputDevice = protolib.getInputDevice();
-		textureManager = protolib.globals.textureManager;
-		shaderManager = protolib.globals.shaderManager;
-		//console.log(protolib.globals);
-		console.log(protolib);
 		
-		shader2d = shaderManager.get("shaders/generic2D.cgfx");
-		technique2d = shader2d.getTechnique("constantColor2D");
-		//effectManager = EffectManager.create();
-		effectManager = protolib.globals.EffectManager;
-		//sceneLoader = SceneLoader.create();
-		sceneLoader = protolib.globals.simplesceneloader;//SceneLoader.create();
-		//console.log(sceneLoader);
+		//if (graphicsDevice.beginFrame()) {
+			//graphicsDevice.clear(clearColor);
+			//graphicsDevice.endFrame();
+		// }
+		//=====================================================================
+		//loading shaders START
+		//=====================================================================
+		shaderManager.load("shaders/generic2D.cgfx", function (shaderObject) {
+			shader2d = shaderObject;
+			technique2d = shader2d.getTechnique("constantColor2D");
+			techniqueParameters2d = graphicsDevice.createTechniqueParameters({
+				clipSpace: null,
+				constantColor: mathDevice.v4Build(0, 0, 0, 1)
+			});
+			//console.log(technique2d);
+			//console.log(techniqueParameters2d);
+			//console.log(shader2d);
+		});
 		
-		physicsDevice = TurbulenzEngine.createPhysicsDevice(physicsDeviceParameters);
-		dynamicsWorld = physicsDevice.createDynamicsWorld(dynamicsWorldParameters);
-		physicsManager = PhysicsManager.create(mathDevice, physicsDevice, dynamicsWorld);
-		renderer = protolib.globals.renderer;
+		shaderManager.load('shaders/font.cgfx', function (shaderObject) {
+			shader = shaderObject;
+			//console.log(shader);
+		});	
 		
-		dscene = Scene.create(mathDevice);
+		shaderManager.load("shaders/debug.cgfx", function (shaderObject) {
+			contactsShader = shaderObject;
+			contactsTechnique = contactsShader.getTechnique("debug_lines_constant");
+			contactsTechniqueParameters = graphicsDevice.createTechniqueParameters({
+				worldViewProjection: null,
+				constantColor: mathDevice.v4Build(1, 0, 0, 1)
+			});
+			//console.log(contactsShader);
+			//console.log(contactsTechnique);
+			//console.log(contactsTechniqueParameters);
+		});
+		//=====================================================================
+		//loading shaders END
+		//=====================================================================
 		
 		draw2D = Draw2D.create({
-			graphicsDevice : graphicsDevice,
-			initialGpuMemory : 1024,
-			maxGpuMemory : (1024 * 1024)
+			graphicsDevice : graphicsDevice
+			//initialGpuMemory : 1024,
+			//maxGpuMemory : (1024 * 1024)
 		});
 		
 		draw2D.configure({
@@ -251,14 +294,12 @@ TurbulenzEngine.onload = function onloadFn() {
 			radius: 10
 		});
 			
-		camera = protolib.globals.camera;
-		scene = protolib.globals.scene;
-		var parm = {
-			name: "worldscene"
+		//var parm = {
+			//name: "worldscene"
 			//local: startPoint,
 			//dynamic: true,
 			//disabled: false
-		};
+		// };
 		//nodeRoot = SceneNode.create(parm);
 		//scene.addRootNode(nodeRoot);
 		
@@ -353,10 +394,9 @@ TurbulenzEngine.onload = function onloadFn() {
 		//init frame render 
 		intervalID = TurbulenzEngine.setInterval(update, 1000 / 60);
 		//console.log(intervalID);
-
+		
 		floor = Floor.create(graphicsDevice, mathDevice);
 		floor.numLines = 400;
-		
 		//===========================================================
 		// set Pre Draw
 		//===========================================================
@@ -414,11 +454,9 @@ TurbulenzEngine.onload = function onloadFn() {
 	
 	var idxobj = 0;
 	
-	SpawnMesh = function(){
-		var spawnmesh =  protolib.loadMesh({mesh: "models/duck.dae"});
-		spawnmesh.setPosition(mathDevice.v3Build(Math.floor((Math.random()*10)+1), Math.floor((Math.random()*10)+1), Math.floor((Math.random()*10)+1)));
-		console.log(spawnmesh);
-	}
+	//=====================================================
+	// Objects START
+	//=====================================================
 	
 	CreatePhysicsCube = function(){
 		idxobj += 1;
@@ -478,16 +516,14 @@ TurbulenzEngine.onload = function onloadFn() {
 		//===========================================================
 		mesh = protolib.loadMesh({mesh: "models/duck.dae"});
 		mesh.setPosition(mathDevice.v3Build(0, -.5, 0));
-		console.log(mesh);
+		//console.log(mesh);
 		
-		var clonemesh =  mesh.node.clone("clonemesh");
+		//var clonemesh =  mesh.node.clone("clonemesh");
 		//var clonemesh =  mesh.node.clone();
-		console.log(clonemesh.isInScene());
-		console.log(clonemesh);
-		clonemesh.update(protolib.globals.scene);
-		protolib.globals.scene.addRootNode(clonemesh);
-		
-		
+		//console.log(clonemesh.isInScene());
+		//console.log(clonemesh);
+		//clonemesh.update(protolib.globals.scene);
+		//protolib.globals.scene.addRootNode(clonemesh);
 		
 		
 		var halfExtents = mathDevice.v3Build(0.5, 0.5, 0.5);
@@ -504,14 +540,11 @@ TurbulenzEngine.onload = function onloadFn() {
             //physicsManager.deletePhysicsNode(duckGeom.physicsNodes[0]);
             //duckGeom.physicsNodes = [];
             //mesh.setLocalTransform(offsetTransform);
-			console.log(scene);
+			//console.log(scene);
 			//var duckMesh0 = scene.findNode("models/duck.dae0");
 			//console.log(duckMesh0);
 			//duckMesh0
-			
 			//duckMesh0.setPosition(mathDevice.v3Build(0, 4, 0));
-			
-			
 			//var clonemesh = duckMesh0.clone("models/duck.dae1");
 			//console.log(clonemesh);
 			//protolib.globals.scene.addRootNode(clonemesh);
@@ -620,6 +653,14 @@ TurbulenzEngine.onload = function onloadFn() {
 		
 	}
 	
+	//=====================================================
+	// Objects END
+	//=====================================================
+	
+	//=====================================================
+	// DEBUG START
+	//=====================================================
+	
 	function addContacts(objectA, objectB, pairContacts) {
         if(debugMode) {
             var numPairContacts = pairContacts.length;
@@ -649,12 +690,12 @@ TurbulenzEngine.onload = function onloadFn() {
 			var screenWidth = graphicsDevice.width;
             var screenHeight = graphicsDevice.height;
 			
-			//console.log(technique2d);
 			if(technique2d !=null){
-				//console.log("draw 2d");
 				graphicsDevice.setTechnique(technique2d);
-				techniqueParameters2d.clipSpace = mathDevice.v4Build(2.0 / screenWidth, -2.0 / screenHeight, -1.0, 1.0);
-				graphicsDevice.setTechniqueParameters(techniqueParameters2d);
+				if(techniqueParameters2d !=null){
+					techniqueParameters2d.clipSpace = mathDevice.v4Build(2.0 / screenWidth, -2.0 / screenHeight, -1.0, 1.0);
+					graphicsDevice.setTechniqueParameters(techniqueParameters2d);
+				}
 			}
 			
             var writer = graphicsDevice.beginDraw(graphicsDevice.PRIMITIVE_LINES, 4, chFormats, chSemantics);
@@ -695,6 +736,7 @@ TurbulenzEngine.onload = function onloadFn() {
 				graphicsDevice.setTechnique(contactsTechnique);
 				contactsTechniqueParameters.worldViewProjection = camera.viewProjectionMatrix;
 				graphicsDevice.setTechniqueParameters(contactsTechniqueParameters);
+				//console.log("draw contacts");
 			}
 			
 			var writer = graphicsDevice.beginDraw(graphicsDevice.PRIMITIVE_LINES, numContacts * 2, contactsFormats, contactsSemantics);
@@ -712,6 +754,10 @@ TurbulenzEngine.onload = function onloadFn() {
 		}
 	}
 	
+	//=====================================================
+	// DEBUG END
+	//=====================================================
+	
 	function DrawText(_text,x,y){
 		protolib.drawText({
 			text: _text,
@@ -724,15 +770,14 @@ TurbulenzEngine.onload = function onloadFn() {
 	}
 
 	function update() {
+		
 		var currentTime = TurbulenzEngine.time;
         var deltaTime = (currentTime - previousFrameTime);
         if (deltaTime > 0.1)
         {
             deltaTime = 0.1;
         }
-		
 		inputDevice.update();
-		
 		if(mouseForces.pickedBody) {
             // If we're dragging a body don't apply the movement to the camera
             cameraController.pitch = 0;
@@ -755,11 +800,7 @@ TurbulenzEngine.onload = function onloadFn() {
         physicsManager.update();
 		DrawText("scene rootNodes: "+scene.rootNodes.length,50,10);
 		DrawText("physics Nodes: "+physicsManager.physicsNodes.length,50,30);
-		//drawContacts();
-		//scene.update();
-		//renderer.update(graphicsDevice, camera, dscene, currentTime);
 		if (protolib.beginFrame()){
-			//renderer.update(graphicsDevice, camera, dscene, currentTime);
 			protolib.endFrame();
 			draw2D.begin();
 			draw2D.draw(drawObject);
@@ -769,21 +810,24 @@ TurbulenzEngine.onload = function onloadFn() {
 			draw2D.end();
 		}
 		
-		/*
-		if (mesh){
-			mesh.getRotationMatrix(rotationMatrix);
-			mathDevice.m43Mul(rotationMatrix, rotationAngleMatrix, rotationMatrix);
-			mesh.setRotationMatrix(rotationMatrix);
-		}
-		*/
-			
-		//console.log("loops?");
+		// if (mesh){
+			//mesh.getRotationMatrix(rotationMatrix);
+			//mathDevice.m43Mul(rotationMatrix, rotationAngleMatrix, rotationMatrix);
+			//mesh.setRotationMatrix(rotationMatrix);
+		// }
+		
 	};
 	
 	//===========================================
 	// Public Access Start
 	//===========================================
 	// For map editing	
+	
+	SpawnMesh = function(){
+		var spawnmesh =  protolib.loadMesh({mesh: "models/duck.dae"});
+		spawnmesh.setPosition(mathDevice.v3Build(Math.floor((Math.random()*10)+1), Math.floor((Math.random()*10)+1), Math.floor((Math.random()*10)+1)));
+		console.log(spawnmesh);
+	}
 	
 	DebugToggle = function(){
 		console.log(debugMode);
@@ -797,7 +841,7 @@ TurbulenzEngine.onload = function onloadFn() {
 		}
 	};
 	
-	DFunScene = function(){
+	ShowSceneFuns = function(){
 		console.log(scene);
 		//console.log("test");
 	};
@@ -811,20 +855,38 @@ TurbulenzEngine.onload = function onloadFn() {
 				mesh.setEnabled(false);
 			}else{
 				mesh.setEnabled(true);
-			}		
+			}
+			console.log(mesh);
 		}
+	};
+	
+	var meshclonecount = 0; 
+	CloneMeshDuck = function(){
+		meshclonecount += 1;
+		//mesh.setEnabled(false);	
+		//console.log("test onload for mesh");
+		console.log(mesh);
+		if(mesh !=null){
+			var clonemesh = mesh.node.clone("duck"+meshclonecount);
+			scene.addRootNode(clonemesh);
+		}
+	};
+	
+	Showshader = function(){
+		console.log(shader);
+	};
+	Showshader2d = function(){
+		console.log(shader2d);
 	};
 	
 	Start_Frame = function (){
 		intervalID = TurbulenzEngine.setInterval(update, 1000 / 60);	
 	};
 	
-	/*
 	End_Frame = function (){
 		TurbulenzEngine.clearInterval(intervalID);
 		console.log("end frame");
 	};
-	*/
 	
 	//===========================================
 	// Public Access End
