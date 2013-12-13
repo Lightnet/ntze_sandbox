@@ -8,8 +8,13 @@ mesh = protolib.loadMesh({mesh: "models/duck.dae"});
 var clonemesh =  mesh.node.clone("clonemesh");
 //will not work right after cloning. It has to wait until it fully loaded.
 
-
 */
+var __extends = this.__extends || function (d, b) {
+      for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+      function __() { this.constructor = d; }
+      __.prototype = b.prototype;
+      d.prototype = new __();
+  };
 
 /*{{ javascript("jslib/aabbtree.js") }}*/
 /*{{ javascript("jslib/camera.js") }}*/
@@ -57,7 +62,14 @@ var clonemesh =  mesh.node.clone("clonemesh");
 /*global Floor: false */
 /*global MouseForces: false */
 /*global PhysicsManager: false */
+/*global InterpolatorController: false */
 /*global HTMLControls: false */
+
+var _blockdata = function(){
+	this.name = "";
+	this.pos = null;
+	this.btype = "blocks";
+}
 
 TurbulenzEngine.onload = function onloadFn() {
 	//console.log(TurbulenzEngine);
@@ -76,7 +88,6 @@ TurbulenzEngine.onload = function onloadFn() {
 	var renderer;
 	var scene;
 	var nodeRoot;
-	//var dscene;
 	var draw2D;
 	
 	var mathDevice = null;
@@ -89,6 +100,7 @@ TurbulenzEngine.onload = function onloadFn() {
 	var effectManager;
 	var sceneLoader;
 	var physicsManager;
+	var animationManager;
 	
 	var inputDeviceParameters = {};
 	var physicsDeviceParameters = {};
@@ -100,31 +112,26 @@ TurbulenzEngine.onload = function onloadFn() {
 		console.log("ERROR MSG!");
 		console.log(msg);
 	};
-	
 	function yieldFn(callback){
 		TurbulenzEngine.setTimeout(callback, 0);
 	};
 	
 	var levelLoaded = false;
 	function levelLoadedFn(){levelLoaded = true;};
-	
 	var protolib;
-	
-	//var gameWidth = 1920;
-	//var gameHeight = 1080;
-	
 	var clearColor = [0.95, 0.95, 1.0, 1.0];
 	var floor;
 	var mesh = null;
 	
 	var previousFrameTime = TurbulenzEngine.time;
 	var mouseForces;
+	var handleForces;
+	
 	var keyCodes;
 	var mouseCodes;
 	
 	var techniqueParameters2d;
 	var technique2d;
-	
 	
 	var debugMode = true;
 	
@@ -166,13 +173,66 @@ TurbulenzEngine.onload = function onloadFn() {
     var contactsFormats;
 	var shader;
 	var shader2d;
+	var face_normal_set;
+	var rayhit_set;
+	var character;
+	var characterController;
+	var CharacterShape;
+	var resourceLoader;
+	var mappingTable;
+	
+	// Settings for the animation
+	var settings = {
+		animScale: 1,
+		defaultRate: 1,
+		drawDebug: false,
+		drawInterpolators: false,
+		drawWireframe: false,
+		loopAnimation: true,
+		blendAnimation: false,
+		transitionLength: 1
+	};
+	// The default animation to start with
+    var defaultAnimIndex = 0;
+	// The current playing animation
+    var curAnimIndex = 0;
+	// The controller references by index
+    var controllerMap = [];
+	var addAnimations = ["models/anime_low_poly_gender_20131128.dae"];
+	var removeAnimations = [];
+	// The controller to blend the transisitions between animations, that don't have a matching key frame
+	var transitionController = null;
+	var transitionStartColor = [0, 0, 0];
+	var transitionEndColor = [0, 0, 0];
+
+	// Reference controller for the whole animation
+	var currentReferenceController = null;
+	var currentNodeController = null;
+	var animationsLoaded;
+	var soundDeviceParameters = {
+		linearDistance: false
+	};
+	var soundDevice;
+	var soundManager;
+	//===========================================
+	// EDITOR
+	//===========================================
+	var selectcube;
+	var bselectobject = false;
+	var singleselectobject;
+	var selectsinglecollisionobject;
+	
+	var bgridsnap = true;
+	
+	var blocks = [];
+	var loadobjects = [];
 	
 	//}
 	
 	function onIntializedFn(protolib){
 		//var version = protolib.version;
 		//console.log(version);
-		//console.log(protolib);
+		console.log(protolib);
 		mathDevice = protolib.getMathDevice();
 		graphicsDevice = protolib.getGraphicsDevice();
 		inputDevice = protolib.getInputDevice();
@@ -185,15 +245,46 @@ TurbulenzEngine.onload = function onloadFn() {
 		//console.log(sceneLoader);
 		physicsDevice = TurbulenzEngine.createPhysicsDevice(physicsDeviceParameters);
 		dynamicsWorld = physicsDevice.createDynamicsWorld(dynamicsWorldParameters);
+		//console.log(dynamicsWorld);
 		physicsManager = PhysicsManager.create(mathDevice, physicsDevice, dynamicsWorld);
-		renderer = protolib.globals.renderer;
-		
+		resourceLoader = ResourceLoader.create();
+		animationManager = AnimationManager.create(errorCallback);
+		soundDevice = protolib.getSoundDevice();
+		//soundManager = SoundManager.create(soundDevice, requestHandler, defaultSound, errorCallback);
+		soundManager = SoundManager.create(soundDevice, requestHandler);
+		console.log(soundManager);
+		renderer = protolib.globals.renderer;		
 		camera = protolib.globals.camera;
 		scene = protolib.globals.scene;
+		
+		// example usage:
+		var mappingTableReceived = function tableReceivedFn(mappingTable){
+			// load assets here
+			animationManager.setPathRemapping(mappingTable.urlMapping, mappingTable.assetPrefix);
+			textureManager.setPathRemapping(mappingTable.urlMapping, mappingTable.assetPrefix);
+			shaderManager.setPathRemapping(mappingTable.urlMapping, mappingTable.assetPrefix);
+			soundManager.setPathRemapping(mappingTable.urlMapping, mappingTable.assetPrefix);
+			sceneLoader.setPathRemapping(mappingTable.urlMapping, mappingTable.assetPrefix);
+			
+			init_assest();
+		};
+		
+		var gameSessionCreated = function gameSessionCreatedFn(gameSession) {
+			mappingTable = TurbulenzServices.createMappingTable(requestHandler, gameSession, mappingTableReceived);
+			//console.log(mappingTable);
+		};
+		
+		var gameSession = TurbulenzServices.createGameSession(requestHandler, gameSessionCreated);
+		//console.log(gameSession);
 		
 		cubeExtents = mathDevice.v3Build(0.5, 0.5, 0.5);
 		m43MulM44 = mathDevice.m43MulM44;
 		isVisibleBoxOrigin = mathDevice.isVisibleBoxOrigin;
+		
+		primitive = graphicsDevice.PRIMITIVE_TRIANGLES;
+		linePrim = graphicsDevice.PRIMITIVE_LINES;
+		cursorFormat = [graphicsDevice.VERTEXFORMAT_FLOAT3];
+		cursorSemantic = graphicsDevice.createSemantics([graphicsDevice.SEMANTIC_POSITION]);
 		
 		chSemantics = graphicsDevice.createSemantics(['POSITION']);
 		chFormats = [graphicsDevice.VERTEXFORMAT_FLOAT3];
@@ -206,20 +297,15 @@ TurbulenzEngine.onload = function onloadFn() {
 			graphicsDevice.VERTEXFORMAT_FLOAT3
 		];
 		
-		//if (!graphicsDevice.shadingLanguageVersion) {
+		if (!graphicsDevice.shadingLanguageVersion) {
 			//errorCallback("No shading language support detected.\nPlease check your graphics drivers are up to date.");
-			//console.log("No shading language support detected.\nPlease check your graphics drivers are up to date.");
+			console.log("No shading language support detected.\nPlease check your graphics drivers are up to date.");
 			//graphicsDevice = null;
 			//return;
-		// }
+		}else{
+			console.log("shading Language Version: "+graphicsDevice.shadingLanguageVersion);
+		}
 		
-		// Clear the background color of the engine window
-		//var clearColor = [0.95, 0.95, 1.0, 1.0];
-		
-		//if (graphicsDevice.beginFrame()) {
-			//graphicsDevice.clear(clearColor);
-			//graphicsDevice.endFrame();
-		// }
 		//=====================================================================
 		//loading shaders START
 		//=====================================================================
@@ -266,17 +352,14 @@ TurbulenzEngine.onload = function onloadFn() {
 			viewportRectangle: [0, 0, graphicsDevice.width, graphicsDevice.height]
 			//viewportRectangle: [0, 0, 800, 600]
 		});
-		
-		primitive = graphicsDevice.PRIMITIVE_TRIANGLES;
-		linePrim = graphicsDevice.PRIMITIVE_LINES;
-		cursorFormat = [graphicsDevice.VERTEXFORMAT_FLOAT3];
-		cursorSemantic = graphicsDevice.createSemantics([graphicsDevice.SEMANTIC_POSITION]);
-		
+
 		var dragMin = mathDevice.v3Build(-50, -50, -50);
 		var dragMax = mathDevice.v3Build(50, 50, 50);
 		mouseForces = MouseForces.create(graphicsDevice, inputDevice, mathDevice, physicsDevice, dragMin, dragMax);
+		handleForces = HandleForces.create(graphicsDevice, inputDevice, mathDevice, physicsDevice, dragMin, dragMax);
 		var worldUp = mathDevice.v3BuildYAxis();
 		mouseForces.clamp = 400;
+		handleForces.clamp = 400;
 		
 		// Control codes
 		keyCodes = inputDevice.keyCodes;
@@ -293,18 +376,9 @@ TurbulenzEngine.onload = function onloadFn() {
 			v3Color: mathDevice.v3Build(1, 1, 1),
 			radius: 10
 		});
-			
-		//var parm = {
-			//name: "worldscene"
-			//local: startPoint,
-			//dynamic: true,
-			//disabled: false
-		// };
-		//nodeRoot = SceneNode.create(parm);
-		//scene.addRootNode(nodeRoot);
 		
 		cameraController = CameraController.create(graphicsDevice, inputDevice, camera);
-		
+		/*
 		// Function for aspect ratio
 		updateAspectRatio = function() {
 			var aspectRatio = (graphicsDevice.width / graphicsDevice.height);
@@ -323,12 +397,10 @@ TurbulenzEngine.onload = function onloadFn() {
 		mathDevice.m43SetAxisRotation(rotationAngleMatrix,
 									  mathDevice.v3Build(0, 1, 0),
 									  (Math.PI * 2) / 360);
-		
+		*/
 		//===========================================================
 		// Input functions
 		//===========================================================
-		//console.log(inputDevice);
-		//var keyCodes = inputDevice.keyCodes;
 		/*
 		var keyUp = function keyUpFn(key) {
 			console.log("key press");
@@ -355,22 +427,53 @@ TurbulenzEngine.onload = function onloadFn() {
 		*/
 		
 		var onMouseDown = function (button) {
-			if(mouseCodes.BUTTON_0 === button || mouseCodes.BUTTON_1 === button) {
+			//console.log(button);
+			//if(mouseCodes.BUTTON_0 === button || mouseCodes.BUTTON_1 === button) {
+			if(mouseCodes.BUTTON_0 === button) {
 				mouseForces.onmousedown();
+				//console.log(mouseForces);
+				//console.log(camera);
+				//console.log(pickedBody);
+				//console.log(handleForces);
+				//console.log(handleForces.pickedBody);
+				singleselectobject = handleForces.pickedBody;
+				
+				//console.log(dynamicsWorld);
+				//console.log(physicsManager);
 			}
 		};
 		
 		var onMouseUp = function (button) {
-			if(mouseCodes.BUTTON_0 === button || mouseCodes.BUTTON_1 === button) {
+			//if(mouseCodes.BUTTON_0 === button || mouseCodes.BUTTON_1 === button) {
+			if(mouseCodes.BUTTON_0 === button) {
 				mouseForces.onmouseup();
+				//console.log(mouseForces.pickedBody);
+				//console.log(pickedBody);
+				//console.log(handleForces.pickedBody);
+				//console.log(dynamicsWorld);
+				singleselectobject = handleForces.pickedBody;
 			}
 			if(mouseCodes.BUTTON_2 === button) {
-				mouseForces.onmouseup();
+				//mouseForces.onmouseup();
+				//console.log(mouseForces.pickedBody);
 				//fireBox();
 			}
 		};
 		
 		var onKeyUp = function physicsOnkeyupFn(keynum) {
+			//console.log(keynum);
+			if(keynum === keyCodes.B)// 'b' key
+			{
+				//reset();
+				BuildBlockFloor();
+			}
+			
+			if(keynum === keyCodes.V) //
+			{
+				DestoryBlock();
+				
+			}
+			
 			if(keynum === keyCodes.R)// 'r' key
 			 {
 				//reset();
@@ -379,14 +482,61 @@ TurbulenzEngine.onload = function onloadFn() {
 			 {
 				//fireBox();
 				console.log("FIRE!");
+				if(CharacterShape !=null){
+					CharacterShape.jump();
+				}
 			} else {
 				cameraController.onkeyup(keynum);
 			}
 		};
+				
+		var onKeyDown = function physicsOnkeyupFn(keynum) {		
+			if(keynum === keyCodes.F){
+				if(CharacterShape !=null){
+					//CharacterShape.position(mathDevice.v3Build(-1, 0, 0));
+					console.log(CharacterShape.position);
+					//var pos = CharacterShape.position;
+					//pos[0] += 0.1;
+					//CharacterShape.position = pos;
+					var pos = CharacterShape.linearVelocity
+					pos[0] = 1;
+					CharacterShape.linearVelocity = pos;
+				}
+			}
+			if(keynum === keyCodes.H){
+				if(CharacterShape !=null){
+					CharacterShape.position(mathDevice.v3Build(1, 0, 0));
+					
+				}
+			}
+			if(keynum === keyCodes.B)// 'b' key
+			{
+				//reset();
+				BuildFloor();
+			}
+		
+			if(keynum === keyCodes.R)// 'r' key
+			{
+				//reset();
+			}
+			if(keynum === keyCodes.SPACE)// Spacebar
+			 {
+				//fireBox();
+				console.log("FIRE!");
+				if(CharacterShape !=null){
+					CharacterShape.jump();
+				}
+			} else {
+				cameraController.onkeyup(keynum);
+			}
+		};
+		
 		// Add event listeners
 		inputDevice.addEventListener("keyup", onKeyUp);
+		//inputDevice.addEventListener("keydown", onKeyDown);
 		inputDevice.addEventListener("mousedown", onMouseDown);
 		inputDevice.addEventListener("mouseup", onMouseUp);
+		
 		//===========================================================
 		//
 		//===========================================================
@@ -394,36 +544,10 @@ TurbulenzEngine.onload = function onloadFn() {
 		//init frame render 
 		intervalID = TurbulenzEngine.setInterval(update, 1000 / 60);
 		//console.log(intervalID);
-		
 		floor = Floor.create(graphicsDevice, mathDevice);
 		floor.numLines = 400;
-		//===========================================================
-		// set Pre Draw
-		//===========================================================
-		//console.log("====");
-		//console.log(dscene);
-		//console.log("====");
-		protolib.setPreDraw(function floorRenderFn() {
-			var currentTime = TurbulenzEngine.time;
-			var deviceWidth = graphicsDevice.width;
-			var deviceHeight = graphicsDevice.height;
-			//renderer.update(graphicsDevice, camera, dscene, currentTime);
-			if(renderer.updateBuffers(graphicsDevice, deviceWidth, deviceHeight)) {
-				floor.render(graphicsDevice, camera);
-				if(debugMode) {
-					scene.drawPhysicsNodes(graphicsDevice, shaderManager, camera, physicsManager);
-					scene.drawPhysicsGeometry(graphicsDevice, shaderManager, camera, physicsManager);
-					//console.log("setPreDraw");
-					drawContacts();
-				}
-			}
-		});
-		
 		var translateVec = mathDevice.v3Build(0, 0, -1);
 		protolib.moveCamera(translateVec);
-		
-		//console.log(protolib);
-		//console.log("finish var setup...");
 		
 		x1 = 5 ;
         y1 = 5;
@@ -448,15 +572,197 @@ TurbulenzEngine.onload = function onloadFn() {
 		//===========================================================
 		//
 		//===========================================================
-		CreateObjects();
-		CreateBoxShape();
+		
+		init_funs();
 	};
 	
+	function init_funs(){
+		CreateFloorShape();
+		PreLoadObjects();
+		//CreateObjects();
+		//CreateBoxShape();
+		//BuildFloor();
+		//createcube_solid();
+		//CreateCapsuleShape();
+		//var testve = mathDevice.v3Build(0, 0, 0);
+		//console.log(testve);
+	}
+	function init_assest(){
+		init_animation_load();
+	}
+	
+	var animationsLoadedCallback = function animationsLoadedCallbackFn(jsonData) {
+		//var addAnimNum = (addAnimations.length - animationsLoaded);
+		//animationManager.loadData(jsonData, "AnimExtra" + addAnimNum + "-");
+		//animationsLoaded -= 1;
+		animationManager.loadData(jsonData, "AnimExtra" + 1 + "-");
+	};
+	
+	function init_animation_load(){
+		//console.log(TurbulenzServices);		
+		var path = addAnimations[0];
+		resourceLoader.load(mappingTable.getURL(path), {
+			append: true,
+			onload: animationsLoadedCallback,
+			requestHandler: requestHandler
+		});	
+	}
+		
 	var idxobj = 0;
+	var cubeidx = 0;
+	var _physicsNode;
 	
 	//=====================================================
 	// Objects START
 	//=====================================================
+	function PreLoadObjects(){
+		//var animationsets = animationManager.loadFile("models/anime_low_poly_gender_20131128.dae");
+		//console.log(animationsets);
+		//var animations = animationManager.getAll();
+		//console.log(animations);
+		mesh = protolib.loadMesh({mesh: "models/duck.dae"});
+		selectcube = protolib.loadMesh({mesh: "models/basecube.dae"});
+		selectcube.setSize(mathDevice.v3Build(0.5, 0.5, 0.5));
+		//character = protolib.loadMesh({mesh: "models/anime_low_poly_gender_20131128.dae"});	
+		console.log(scene);
+		console.log(selectcube);
+	}
+	
+	function BuildBlockFloor(){
+		cubeidx += 1;
+		//var position = mathDevice.m43BuildTranslation(0, 3, 0);
+		//var position = rayhit_set;
+		//var setx = Math.floor(rayhit_set[0]+face_normal_set[0]);
+		//var sety = Math.floor(rayhit_set[1]+face_normal_set[1]);
+		//var setz = Math.floor(rayhit_set[2]+face_normal_set[2]);
+		
+		var setx = rayhit_set[0];
+		var sety = rayhit_set[1];
+		var setz = rayhit_set[2];
+		
+		var bfound = false;
+		console.log(blocks);
+		for (var i = 0; i < blocks.length;i++){
+			//console.log(blocks[i].pos);
+			//console.log(rayhit_set);
+			if((blocks[i].pos[0] == rayhit_set[0])&&(blocks[i].pos[1] == rayhit_set[1])&&(blocks[i].pos[2] == rayhit_set[2])){
+				bfound = true;
+				//console.log("found block");
+				break;
+			}
+		}
+		
+		if(bfound == false){		
+			//console.log(rayhit_set);
+			var position = mathDevice.m43BuildTranslation(setx, sety, setz);
+			
+			var cubeExtents = mathDevice.v3Build(0.5, 0.5, 0.5);
+			var boxShape = physicsDevice.createBoxShape({
+				halfExtents: cubeExtents,
+				margin: 0.001
+			});
+			var inertia = mathDevice.v3Copy(boxShape.inertia);
+			inertia = mathDevice.v3ScalarMul(inertia, 0.5);
+			var identity = mathDevice.m43BuildIdentity();
+			
+			var box = physicsDevice.createCollisionObject({
+				shape: boxShape,
+				mass: 1.0,
+				transform: position,
+				friction: 0.8,
+				restitution: 0.1,
+				group: physicsDevice.FILTER_STATIC,
+				mask: physicsDevice.FILTER_ALL
+			});
+			var newBox = SceneNode.create({
+				name: "cube" + cubeidx,
+				local: position,
+				dynamic: true,
+				disabled: false
+			});
+			var physicsNode = _physicsNode = {
+				body: box,
+				target: newBox,
+				dynamic: true
+			};
+			newBox.physicsNodes = [
+				physicsNode
+			];
+			
+			newBox.setDynamic();
+			physicsManager.physicsNodes.push(physicsNode);
+			physicsManager.dynamicPhysicsNodes.push(physicsNode);
+			physicsManager.enableHierarchy(newBox, true);
+			scene.addRootNode(newBox);
+			console.log(newBox);
+			console.log(physicsNode);
+			//console.log(physicsManager);
+			
+			var bloc = new _blockdata();
+			//console.log(bloc);
+			bloc.pos = mathDevice.v3Build(setx, sety, setz)
+			blocks.push(bloc);
+		}
+	}
+	
+	function DestoryBlock(){
+		console.log("DestoryBlock");
+		
+		var sceneobject;
+		var physicsobject;
+		
+		var bfound = false;;
+		for (var i = 0; i < scene.rootNodes.length; i++){
+			//console.log(scene.rootNodes[i].name);
+			if(scene.rootNodes[i].physicsNodes !=null){
+				//console.log(scene.rootNodes[i].physicsNodes[0]);
+				sceneobject = scene.rootNodes[i];
+				if(scene.rootNodes[i].physicsNodes[0].body == selectsinglecollisionobject){
+					physicsobject = scene.rootNodes[i].physicsNodes[0];
+					//console.log("found collision in the scene");
+					bfound = true;
+					break;
+				}
+			}
+		}
+		
+		if(bfound == true){
+			scene.removeRootNode(sceneobject);
+			physicsManager.deletePhysicsNode(physicsobject);
+		}
+		
+		
+		
+		//console.log("singleselectobject");
+		//console.log(selectsinglecollisionobject);
+		//console.log("_physicsNode");
+		//console.log(_physicsNode);
+		//console.log(singleselectobject.transform);
+		
+		/*
+		if(_physicsNode.body == selectsinglecollisionobject){
+			console.log("found collision");
+		
+		}else{
+			console.log("no found collision");
+		}
+		*/
+		
+		/*
+		console.log("_physicsNode");
+		console.log(_physicsNode);
+		if(_physicsNode.body == singleselectobject){
+		
+			console.log("found!");
+		}else{
+			console.log("not found!");
+		}
+		*/
+		
+		//physicsManager.deletePhysicsNode(_physicsNode);
+	}
+	
+	
 	
 	CreatePhysicsCube = function(){
 		idxobj += 1;
@@ -474,7 +780,6 @@ TurbulenzEngine.onload = function onloadFn() {
         });
 	
 		function newPhysicsNode(name, _shape, offsetTransform, pos) {
-            
             var duckPhys = SceneNode.create({
                 name: name + "Phys" + idxobj,
                 local: pos,
@@ -505,7 +810,6 @@ TurbulenzEngine.onload = function onloadFn() {
             physicsManager.dynamicPhysicsNodes.push(physicsNode);
             physicsManager.enableHierarchy(duckPhys, true);
         }
-		
 		newPhysicsNode("DuckBox", shape, mathDevice.m43BuildIdentity(), position);
 	};
 	
@@ -514,8 +818,12 @@ TurbulenzEngine.onload = function onloadFn() {
 		//===========================================================
 		//
 		//===========================================================
-		mesh = protolib.loadMesh({mesh: "models/duck.dae"});
-		mesh.setPosition(mathDevice.v3Build(0, -.5, 0));
+		//mesh = protolib.loadMesh({mesh: "models/duck.dae"});
+		//mesh.setPosition(mathDevice.v3Build(0, -.5, 0));
+		
+		
+		
+		
 		//console.log(mesh);
 		
 		//var clonemesh =  mesh.node.clone("clonemesh");
@@ -525,7 +833,7 @@ TurbulenzEngine.onload = function onloadFn() {
 		//clonemesh.update(protolib.globals.scene);
 		//protolib.globals.scene.addRootNode(clonemesh);
 		
-		
+		/*
 		var halfExtents = mathDevice.v3Build(0.5, 0.5, 0.5);
 		var position = mathDevice.m43BuildTranslation(0, 5, 0);
 		//var position = mesh.localTransform;
@@ -585,10 +893,10 @@ TurbulenzEngine.onload = function onloadFn() {
             physicsManager.enableHierarchy(duckPhys, true);
         }
 		newPhysicsNode("DuckBox", shape, mathDevice.m43BuildIdentity(), position);
-		
+		*/
 	};
 	
-	function CreateBoxShape(){
+	function CreateFloorShape(){
 		var floorShape = physicsDevice.createPlaneShape({
 			normal: mathDevice.v3Build(0, 1, 0),
 			distance: 0,
@@ -596,7 +904,8 @@ TurbulenzEngine.onload = function onloadFn() {
 		});
 		var floorObject = physicsDevice.createCollisionObject({
 			shape: floorShape,
-			transform: mathDevice.m43BuildIdentity(),
+			//transform: mathDevice.m43BuildIdentity(0,-0.5,0),
+			transform: mathDevice.m43BuildTranslation(0, -0.5, 0),
 			friction: 0.8,
 			restitution: 0.1,
 			group: physicsDevice.FILTER_STATIC,
@@ -607,10 +916,12 @@ TurbulenzEngine.onload = function onloadFn() {
 		//onRemovedContacts : addContacts
 		// Adds the floor collision object to the world
 		dynamicsWorld.addCollisionObject(floorObject);
-
+		
 		//=================================================
-		//cube
+		//cube START
 		//=================================================
+		//var position = mathDevice.m43BuildTranslation(0.5, 0.5, 0.5);
+		var position = mathDevice.m43BuildTranslation(0, 0, 0);
 		var cubeExtents = mathDevice.v3Build(0.5, 0.5, 0.5);
 		var boxShape = physicsDevice.createBoxShape({
 			halfExtents: cubeExtents,
@@ -624,13 +935,13 @@ TurbulenzEngine.onload = function onloadFn() {
                 shape: boxShape,
                 mass: 1.0,
                 inertia: boxShape.inertia,
-                transform: identity,
+                transform: position,
                 friction: 0.9,
                 restitution: 0.1
             });
             var newBox = SceneNode.create({
                 name: "box" + "1",
-                local: identity,
+                local: position,
                 dynamic: true,
                 disabled: false
             });
@@ -649,8 +960,163 @@ TurbulenzEngine.onload = function onloadFn() {
 		physicsManager.enableHierarchy(newBox, true);
 		scene.addRootNode(newBox);
 		//=================================================
+		// cube END
 		//=================================================
+
+		createcube_solid();
+	}
+	
+	function createcube_solid(){
+		cubeidx += 1;
+		var position = mathDevice.m43BuildTranslation(0, 3, 0);
+		var cubeExtents = mathDevice.v3Build(0.5, 0.5, 0.5);
+		var boxShape = physicsDevice.createBoxShape({
+			halfExtents: cubeExtents,
+			margin: 0.001
+		});
+		var inertia = mathDevice.v3Copy(boxShape.inertia);
+		inertia = mathDevice.v3ScalarMul(inertia, 0.5);
+		var identity = mathDevice.m43BuildIdentity();
 		
+		var box = physicsDevice.createCollisionObject({
+                shape: boxShape,
+                mass: 1.0,
+                transform: position,
+                friction: 0.8,
+				restitution: 0.1,
+				group: physicsDevice.FILTER_STATIC,
+				mask: physicsDevice.FILTER_ALL
+            });
+            var newBox = SceneNode.create({
+                name: "cube" + cubeidx,
+                local: position,
+                dynamic: true,
+                disabled: false
+            });
+            var physicsNode = {
+                body: box,
+                target: newBox,
+                dynamic: true
+            };
+            newBox.physicsNodes = [
+                physicsNode
+            ];
+		
+		newBox.setDynamic();
+		physicsManager.physicsNodes.push(physicsNode);
+        physicsManager.dynamicPhysicsNodes.push(physicsNode);
+		physicsManager.enableHierarchy(newBox, true);
+		scene.addRootNode(newBox);
+	}
+	
+	var parameters = {
+        radius: 0.25,
+        halfHeight: 1,
+        crouchHalfHeight: 0.5,
+        rotateSpeed: 2,
+        mouseRotateFactor: 2,
+        collisionMargin: 1,
+        maxSpeed: 12,
+        maxStepHeight: 1,
+        maxJumpHeight: 2
+    };
+	
+	function CreateCapsuleShape(){
+		cubeidx += 1;
+		
+		var position = mathDevice.m43BuildTranslation(0, 5, 0);
+		/*
+		characterController = CharacterController.create(graphicsDevice,
+                                                     inputDevice,
+                                                     physicsDevice,
+                                                     dynamicsWorld,
+                                                     position,
+                                                     parameters);
+		
+		console.log(characterController);
+		*/
+		//physicsManager.addNode(character.node, characterController.character._private.rigidBody);
+		
+		
+		
+		//var position = mathDevice.m43BuildTranslation(0, 3, 0);
+		//var cubeExtents = mathDevice.v3Build(0.5, 0.5, 0.5);
+		//var margin = 0.001;
+		//var cubeExtents02 = mathDevice.v3Build(0.5, 0.5, 0.5);
+		//var identity = mathDevice.m43BuildIdentity();
+		//var characterRadius = 0.25;
+		//var characterHeight = 1.0;
+		//physicsManager.addNode(character.node, characterController.character._private.rigidBody);
+		
+		/*
+		CharacterShape = physicsDevice.createCharacter({
+			//transform : position,
+			mass: 100.0,
+			restitution: 0.1,
+			friction: 0.7,
+			radius : characterRadius,
+			height : characterHeight,
+			crouchHeight: (characterHeight * 0.5),
+			stepHeight : (characterHeight * 0.1),
+			maxJumpHeight : (characterHeight * 0.4),
+			group: physicsDevice.FILTER_CHARACTER,
+			mask: physicsDevice.FILTER_ALL
+		});
+		*/
+		
+		//console.log(CharacterShape);
+		//console.log(CharacterShape._private.rigidBody);
+		//console.log(physicsManager);
+		//physicsManager.addNode(character.node, CharacterShape._private.rigidBody);
+		//physicsManager.addNode(sceneNode, rigidBody)
+
+		/*
+		var halfExtents = mathDevice.v3Build(0.5, 0.5, 0.5);
+		var boxShape = physicsDevice.createBoxShape({
+            halfExtents: halfExtents,
+            margin: margin
+        });
+		
+		//console.log(dynamicsWorld);
+		//dynamicsWorld.addCharacter(boxShape);
+		//dynamicsWorld.addCollisionObject(boxShape);
+		//console.log(boxShape);
+		//console.log(boxShape.inertia);
+		
+		var inertia = mathDevice.v3Copy(boxShape.inertia);
+		inertia = mathDevice.v3ScalarMul(inertia, 0.5);
+		
+		var box = physicsDevice.createRigidBody({
+			shape: boxShape,
+			mass: 1.0,
+			inertia: inertia,
+			transform: position,
+			friction: 0.8,
+			restitution: 0.1,
+		});
+		
+		var newBox = SceneNode.create({
+			name: "cube" + cubeidx,
+			local: position,
+			dynamic: true,
+			disabled: false
+		});
+		
+		var physicsNode = {
+			body: box,
+			target: newBox,
+			dynamic: true
+		};
+		newBox.physicsNodes = [
+			physicsNode
+		];
+		
+		newBox.setDynamic();
+		physicsManager.physicsNodes.push(physicsNode);
+        physicsManager.dynamicPhysicsNodes.push(physicsNode);
+		physicsManager.enableHierarchy(newBox, true);
+		*/
+		//scene.addRootNode(newBox);
 	}
 	
 	//=====================================================
@@ -723,12 +1189,6 @@ TurbulenzEngine.onload = function onloadFn() {
         }
     }
 	
-	protolib = Protolib.create({
-		onInitialized:onIntializedFn,
-		enableDynamicUI: false
-		//enableDynamicUI: true
-	});
-	
 	function drawContacts() {
 		if (numContacts) {
 			
@@ -758,6 +1218,10 @@ TurbulenzEngine.onload = function onloadFn() {
 	// DEBUG END
 	//=====================================================
 	
+	//=====================================================
+	// 
+	//=====================================================
+	
 	function DrawText(_text,x,y){
 		protolib.drawText({
 			text: _text,
@@ -769,54 +1233,9 @@ TurbulenzEngine.onload = function onloadFn() {
 	
 	}
 
-	function update() {
-		
-		var currentTime = TurbulenzEngine.time;
-        var deltaTime = (currentTime - previousFrameTime);
-        if (deltaTime > 0.1)
-        {
-            deltaTime = 0.1;
-        }
-		inputDevice.update();
-		if(mouseForces.pickedBody) {
-            // If we're dragging a body don't apply the movement to the camera
-            cameraController.pitch = 0;
-            cameraController.turn = 0;
-            cameraController.step = 0;
-        }
-		
-		cameraController.update();
-        var deviceWidth = graphicsDevice.width;
-        var deviceHeight = graphicsDevice.height;
-        var aspectRatio = (deviceWidth / deviceHeight);
-        if(aspectRatio !== camera.aspectRatio) {
-            camera.aspectRatio = aspectRatio;
-            camera.updateProjectionMatrix();
-        }
-        camera.updateViewProjectionMatrix();
-		numContacts = 0;
-		mouseForces.update(dynamicsWorld, camera, 0.1);
-		dynamicsWorld.update();
-        physicsManager.update();
-		DrawText("scene rootNodes: "+scene.rootNodes.length,50,10);
-		DrawText("physics Nodes: "+physicsManager.physicsNodes.length,50,30);
-		if (protolib.beginFrame()){
-			protolib.endFrame();
-			draw2D.begin();
-			draw2D.draw(drawObject);
-			//draw2D.drawSprite(sprite);
-			drawCrosshair();
-			//drawContacts();
-			draw2D.end();
-		}
-		
-		// if (mesh){
-			//mesh.getRotationMatrix(rotationMatrix);
-			//mathDevice.m43Mul(rotationMatrix, rotationAngleMatrix, rotationMatrix);
-			//mesh.setRotationMatrix(rotationMatrix);
-		// }
-		
-	};
+	//=====================================================
+	// 
+	//=====================================================
 	
 	//===========================================
 	// Public Access Start
@@ -888,8 +1307,307 @@ TurbulenzEngine.onload = function onloadFn() {
 		console.log("end frame");
 	};
 	
+	GetAnimations = function(){
+		console.log("===========================");
+		var animations = animationManager.getAll();
+		console.log(animations);
+		var animation = animationManager.get("mesh_gender_male");
+		console.log(animation);
+		
+	}
+	
 	//===========================================
 	// Public Access End
+	//===========================================
+	
+	//===========================================
+	// Init Protolib START
+	//===========================================
+	
+	// Initialise all animations with InterpolatorControllers set to start time
+     var initAnimations = function initAnimationsFn(scene) {
+         var a, n, interp, skinnedNode, node;
+         var nodeHasSkeleton = animationManager.nodeHasSkeleton;
+         var sceneNodes = scene.rootNodes;
+         var sceneAnimations = animationManager.getAll();
+         var numNodes = sceneNodes.length;
+ 
+         var random = Math.random;
+         var floor = Math.floor;
+ 
+         var animations = [];
+         var animationsLength = 0;
+ 
+         for (a in sceneAnimations) {
+             if (sceneAnimations.hasOwnProperty(a)) {
+                 animations.push(sceneAnimations[a]);
+             }
+         }
+         animationsLength = animations.length;
+ 
+         scene.skinnedNodes = [];
+ 
+         var randomIndex = 0;
+ 
+         for (n = 0; n < numNodes; n += 1) {
+             node = sceneNodes[n];
+             var skeleton = nodeHasSkeleton(node);
+             if (skeleton) {
+                 // Randomly select an animation
+                 randomIndex = (floor(random() * 100) + randomIndex) % animationsLength;
+                 var animation = animations[randomIndex];
+ 
+                 // Create an interpolation controller
+				 //console.log(animation);
+				 if(animation !=null){
+					 interp = InterpolatorController.create(animation.hierarchy);
+					 interp.setAnimation(animation, settings.loopAnimation);
+	 
+					 // Set a different start time for each looping animation (for variation)
+					 interp.setTime(animation.length * random());
+					 interp.setRate(settings.defaultRate);
+					 
+					 // Create a skinnedNode
+					skinnedNode = SkinnedNode.create(graphicsDevice, mathDevice, node, skeleton, interp);
+					skinnedNode.active = false;
+					scene.skinnedNodes.push(skinnedNode);
+					//console.log("run?");
+				 }
+ 
+                 
+             }
+         }
+ 
+         return true;
+     };
+	
+	//console.log(dynamicsWorld);
+	
+	var update_count = 0;
+	
+	
+	//console.log(testve);
+	
+	function update() {
+		
+		var currentTime = TurbulenzEngine.time;
+        var deltaTime = (currentTime - previousFrameTime);
+        if (deltaTime > 0.1)
+        {
+            deltaTime = 0.1;
+        }
+		
+		if(characterController !=null){
+			characterController.update(deltaTime);
+			//console.log("controller update...");
+		}
+		
+		inputDevice.update();
+		if(mouseForces.pickedBody) {
+            // If we're dragging a body don't apply the movement to the camera
+            cameraController.pitch = 0;
+            cameraController.turn = 0;
+            cameraController.step = 0;
+        }
+		
+		cameraController.update();
+        var deviceWidth = graphicsDevice.width;
+        var deviceHeight = graphicsDevice.height;
+        var aspectRatio = (deviceWidth / deviceHeight);
+        if(aspectRatio !== camera.aspectRatio) {
+            camera.aspectRatio = aspectRatio;
+            camera.updateProjectionMatrix();
+        }
+        camera.updateViewProjectionMatrix();
+		numContacts = 0;
+		mouseForces.update(dynamicsWorld, camera, 0.1);
+		handleForces.update(dynamicsWorld, camera, 0.1);
+		dynamicsWorld.update(deltaTime);
+        physicsManager.update(deltaTime);
+		
+		DrawText("scene rootNodes: "+scene.rootNodes.length,50,10);
+		DrawText("physics Nodes: "+physicsManager.physicsNodes.length,50,30);
+		
+		//var mousePos = protolib.getMousePosition();
+		var pos = mathDevice.v3Build(0, 0, 0);
+		var dir = mathDevice.v3Build(0, 0, 0);
+		update_count += 1;
+		if(update_count >= 32){
+			update_count = 0;
+		}
+		
+		// Init the animations from the scene
+        initAnimations(scene);
+		
+		pos = handleForces.pickRayFrom;
+		dir = handleForces.pickRayTo;
+		
+		//DrawText("cam pos: x:"+pos[0],50,100);
+		//DrawText("cam pos: y:"+pos[1],50,110);
+		//DrawText("cam pos: z:"+pos[2],50,120);
+		//DrawText("cam fir: x:"+dir[0],50,130);
+		//DrawText("cam fir: y:"+dir[1],50,140);
+		//DrawText("cam fir: z:"+dir[2],50,150);
+		//var fpoint  = mathDevice.v3Build(0, 0, 0);
+		//if(camera != null){
+			//fpoint = camera.getFrustumFarPoints();
+		// }
+		//DrawText("fpoint fir: x:"+fpoint[0],50,130);
+		//DrawText("fpoint fir: y:"+fpoint[1],50,150);
+		//DrawText("fpoint fir: z:"+fpoint[2],50,170);
+		
+		var rayHit = dynamicsWorld.rayTest({
+			from: pos,
+			to: dir,
+			maxFactor: 2,
+			group: physicsDevice.FILTER_PROJECTILE
+			//exclude: ownerPhysicsObject
+		});
+		
+		var b;
+		var ray;
+		if(rayHit !=null){
+			DrawText("hit found",50,40);
+			b = rayHit.body;
+			ray = rayHit;
+			if(rayHit.body !=null){
+				var id = rayHit.body._private._public.id;
+				DrawText("id:"+id,50,50);
+			}
+			if(rayHit.collisionObject !=null){
+				selectsinglecollisionobject = rayHit.collisionObject;
+			}
+			
+			if(rayHit.hitPoint != null){
+				//console.log(rayHit);
+                var pickPos = rayHit.hitPoint;
+                var norPos = rayHit.hitNormal;
+				//console.log(norPos);
+				norPos[0] = Math.floor(norPos[0].toFixed(1));
+				norPos[1] = Math.floor(norPos[1].toFixed(1));
+				norPos[2] = Math.floor(norPos[2].toFixed(1));
+				
+				var hpos = mathDevice.v3Build(0, 0, 0);
+				hpos[0] = (pickPos[0]);
+				hpos[1] = (pickPos[1]);
+				hpos[2] = (pickPos[2]);
+				
+				DrawText("hpos x:"+hpos[0],50,130);
+				DrawText("hpos y:"+hpos[1],50,150);
+				DrawText("hpos z:"+hpos[2],50,170);
+				
+				hpos[0] = parseInt(hpos[0]);
+				
+				if(norPos[0] == -1){
+					hpos[0] += ( norPos[0]);
+				}
+				if(norPos[0] == 1){
+					hpos[0] += (1);
+				}
+				
+				
+				hpos[1] = parseInt(hpos[1]);
+				if(norPos[1] != -1){
+					hpos[1] += ( norPos[1]);
+				}
+				
+				hpos[2] = parseInt(hpos[2]);
+				if(norPos[2] == -1){
+					hpos[2] += ( norPos[2]);
+				}
+				if(norPos[2] == 1){
+					//console.log(norPos[2]);
+					hpos[2] += ( 1);
+				}
+				
+				//DrawText("norPos x:"+norPos[0],50,190);
+				//DrawText("norPos y:"+norPos[1],50,210);
+				//DrawText("norPos z:"+norPos[2],50,220);
+				if(mesh !=null){
+					//mesh.setPosition(hpos);			
+				}
+				
+				if (selectcube !=null){
+					selectcube.setPosition(hpos);	
+				}
+				if(bgridsnap == true){
+					rayhit_set = hpos;
+				}else{
+					rayhit_set = pickPos;
+				}
+				face_normal_set = norPos;
+			}
+		}
+		if(update_count >= 31){		
+			//console.log(b);
+			//console.log(rayHit);
+		}
+		
+		
+		if (protolib.beginFrame()){
+		
+			protolib.endFrame();
+			draw2D.begin();
+			draw2D.draw(drawObject);
+			//draw2D.drawSprite(sprite);
+			drawCrosshair();
+			//drawContacts();
+			draw2D.end();
+		}
+		
+		// if (mesh){
+			//mesh.getRotationMatrix(rotationMatrix);
+			//mathDevice.m43Mul(rotationMatrix, rotationAngleMatrix, rotationMatrix);
+			//mesh.setRotationMatrix(rotationMatrix);
+		// }
+		
+	};
+	
+	protolib = Protolib.create({
+		onInitialized:onIntializedFn,
+		enableDynamicUI: false
+		//enableDynamicUI: true
+	});
+	
+	protolib.setPostDraw(function() {
+		//DrawText("setPostDraw" , 10,70);
+		//console.log("setPostDraw");
+		//graphicsDevice.clear(clearColor);
+		//draw2D.begin();
+			//draw2D.draw(drawObject);
+			//draw2D.drawSprite(sprite);
+			//drawCrosshair();
+			//drawContacts();
+			//draw2D.end();
+	});
+	
+	protolib.setPostRendererDraw(function() {
+		//DrawText("setPostRendererDraw" , 10,90);
+		//console.log("setPostRendererDraw");
+		//graphicsDevice.clear(clearColor);
+	 });
+	
+	protolib.setPreDraw(function floorRenderFn() {
+		//graphicsDevice.clear(clearColor);
+		//console.log("setPreDraw");
+		var currentTime = TurbulenzEngine.time;
+		var deviceWidth = graphicsDevice.width;
+		var deviceHeight = graphicsDevice.height;
+		//renderer.update(graphicsDevice, camera, dscene, currentTime);
+		if(renderer.updateBuffers(graphicsDevice, deviceWidth, deviceHeight)) {
+			floor.render(graphicsDevice, camera);
+			if(debugMode) {
+				scene.drawPhysicsNodes(graphicsDevice, shaderManager, camera, physicsManager);
+				scene.drawPhysicsGeometry(graphicsDevice, shaderManager, camera, physicsManager);
+				//console.log("setPreDraw");
+				drawContacts();
+			}
+		}
+	});
+	
+	console.log(protolib);
+	//===========================================
+	// Init Protolib END
 	//===========================================
 	
 	function destroyScene() {

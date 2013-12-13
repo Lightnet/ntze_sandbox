@@ -31,9 +31,9 @@ helptext += "[[gib;#FF9999;#000]spawn [cube,mesh]], ";
 $(function() {
 	$('#term_console').terminal(
 		function(command, term) {
-			console.log(command);
-			console.log(term);
-			console.log(term.get_prompt());
+			//console.log(command);
+			//console.log(term);
+			//console.log(term.get_prompt());
 			if(command == 'help'){
 				
 				var textinfp = "";
@@ -79,7 +79,7 @@ $(function() {
 			if((command == 'fullscreen')||(command == 'fs')){
 				ToggleFullScreen_mode();
 				console.log(Window.isFullscreen);
-				console.log(gui);
+				//console.log(gui);
 			}
 			
 			if((command == 'mesh')){
@@ -109,9 +109,27 @@ $(function() {
 				}
 			}
 			
-			if((command == 'dscene')){
+			if((command == 'scene')){
 				if(turbulenz_app !=null){
-						turbulenz_app.DFunScene();
+						turbulenz_app.ShowSceneFuns();
+				}
+			}
+			
+			if((command == 'shader')){
+				if(turbulenz_app !=null){
+						turbulenz_app.Showshader();
+				}
+			}
+			
+			if((command == 'shader2d')){
+				if(turbulenz_app !=null){
+						turbulenz_app.Showshader2d();
+				}
+			}
+			
+			if((command == 'animations')){
+				if(turbulenz_app !=null){
+						turbulenz_app.GetAnimations();
 				}
 			}
 			
@@ -123,10 +141,10 @@ $(function() {
 			}
 			
 			var args = command.split(" ");
-			console.log(args);
+			//console.log(args);
 			//console.log(args.join(" "));
 			//console.log(command);
-			console.log("args[0]: " + args[0]);
+			//console.log("args[0]: " + args[0]);
 			if(args[0] == "spawn"){
 				console.log(args[1]);
 				if(args[1] == "cube"){
@@ -138,6 +156,12 @@ $(function() {
 				if(args[1] == "mesh"){
 					if(turbulenz_app !=null){
 						turbulenz_app.SpawnMesh();
+					}
+				}
+				
+				if(args[1] == "duck"){
+					if(turbulenz_app !=null){
+						turbulenz_app.CloneMeshDuck();
 					}
 				}
 			}

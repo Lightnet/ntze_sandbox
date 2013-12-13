@@ -79,7 +79,7 @@ $(function() {
 			if((command == 'fullscreen')||(command == 'fs')){
 				ToggleFullScreen_mode();
 				console.log(Window.isFullscreen);
-				console.log(gui);
+				//console.log(gui);
 			}
 			
 			if((command == 'mesh')){
