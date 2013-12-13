@@ -4,36 +4,47 @@
 }
 
 body{
-	#position:absolute;
-	#position:fixed;
-	#top:0; right:0; bottom:0; left:0;
-	margin:0;
-}
-
-#canvas{
 	position:fixed
-	#float:left;
-	top:0;
-	right:0; 
-	bottom:0; 
-	left:0;
+	#position:fixed;
+	top:0;right:0; bottom:0; left:0;
 	margin:0;
 	width:100%;
 	height:100%;
 }
 
-#ui_scene{
+#canvas{
 	position:fixed;
-	top:0;
-	right:0;
-	margin:0;
-	#width:100%;
-	#height:100%;
-	#background:black;
+	margin:0; 
+	padding:0;
+	width:100%;
+	height:100%;
 }
 
 #term_console{
 	position:absolute;
 	bottom:0; 
-	#margin:0;
+	margin:0; 
+	padding:0;
+}
+
+#toolbutton{
+	position:absolute;
+	bottom:0; 
+	margin:0;
+	left:0;
+	padding:0;
+}
+
+#ui_scene{
+	position:fixed;
+	top:0;
+	left:0;
+	margin:0;
+	padding:0;
+}
+#toolbutton{
+	position:absolute;
+	bottom:0;
+	margin:0;
+	padding:0;
 }

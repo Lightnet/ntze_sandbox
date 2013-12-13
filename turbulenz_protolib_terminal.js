@@ -31,9 +31,9 @@ helptext += "[[gib;#FF9999;#000]spawn [cube,mesh]], ";
 $(function() {
 	$('#term_console').terminal(
 		function(command, term) {
-			console.log(command);
-			console.log(term);
-			console.log(term.get_prompt());
+			//console.log(command);
+			//console.log(term);
+			//console.log(term.get_prompt());
 			if(command == 'help'){
 				
 				var textinfp = "";
@@ -79,7 +79,7 @@ $(function() {
 			if((command == 'fullscreen')||(command == 'fs')){
 				ToggleFullScreen_mode();
 				console.log(Window.isFullscreen);
-				console.log(gui);
+				//console.log(gui);
 			}
 			
 			if((command == 'mesh')){
@@ -127,6 +127,12 @@ $(function() {
 				}
 			}
 			
+			if((command == 'animations')){
+				if(turbulenz_app !=null){
+						turbulenz_app.GetAnimations();
+				}
+			}
+			
 			if (command !== '') {
 				//var result = window.eval(command);
 				//if (result != undefined) {
@@ -135,10 +141,10 @@ $(function() {
 			}
 			
 			var args = command.split(" ");
-			console.log(args);
+			//console.log(args);
 			//console.log(args.join(" "));
 			//console.log(command);
-			console.log("args[0]: " + args[0]);
+			//console.log("args[0]: " + args[0]);
 			if(args[0] == "spawn"){
 				console.log(args[1]);
 				if(args[1] == "cube"){

@@ -25,7 +25,7 @@ document.addEventListener("webkitfullscreenchange", function () {
 	var fullscreen = (document.webkitIsFullScreen)? "on" : "off";
 	console.log("fullscreen:"+fullscreen);
 	if(fullscreen == "off"){
-		ToggleScreen();
+		//ToggleScreen();
 	}
  }, false);
 
