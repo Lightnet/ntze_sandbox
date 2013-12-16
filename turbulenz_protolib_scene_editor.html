@@ -6,7 +6,7 @@
 			var TurbulenzEngine = {};
 		</script>
 		
-		<link rel="stylesheet" type="text/css" href="css/turbulenz_scene.css">
+		<link rel="stylesheet" type="text/css" href="css/turbulenz_protolib_scene_editor.css">
 		
 		<script type="text/javascript" src="jslib/debug.js"></script>
 		<script src="jslib/vmath.js"></script>
@@ -61,7 +61,7 @@
 
 		<script src="jslib/scenedebugging.js"></script>
 		<script src="jslib/charactercontroller.js"></script>
-		<script src="handleforces.js"></script>
+		
 		
 		<script src="protolib/duimanager.js"></script>
 		<script src="protolib/jqueryextend.js"></script>
@@ -75,27 +75,402 @@
 		
 		<script src="scripts/motion.js"></script>
 		<script src="scripts/htmlcontrols.js"></script>
+		<!-- -->
+		<script src="js/knockout-2.3.0.js"></script>
+		<script src="jse/handleforces.js"></script>
 		
 		<link rel="stylesheet" type="text/css" href="css/pure-min.css">
 		<link rel="stylesheet" type="text/css" href="css/jquery-ui-1.10.3.custom.min.css">
 		<script src="js/jquery-1.9.1.js"></script>
 		<script src="js/jquery-ui-1.10.3.custom.min.js"></script>
+		<script src="js/jquery.layout-latest.min.js"></script>
+		<!--
+		
+		-->
+		
 		<link rel="stylesheet" type="text/css" href="css/jquery.terminal.css">
 		<script src="js/jquery.terminal-0.7.7.min.js"></script>
+		
 		<script src="js/mousetrap.min.js"></script>
 		
-	</head>
-	<body id="mainbody" class="mousetrap">
-
-		<canvas id="canvas" type="application/vnd.turbulenz" width="800px" height="600px"></canvas>
-		<script src="turbulenz_protolib_scene_editor.js"></script>
-		<script src="turbulenz_protolib_app_entry.js"></script>
+		<link rel="stylesheet" type="text/css" href="css/uikit.min.css">
+		<script src="js/uikit.min.js"></script>
+		
+		<script src="js/editoruserinterface.js"></script>
+		<script src="jse/turbulenz_protolib_scene_editor.js"></script>
+		<script src="jse/turbulenz_protolib_app_entry.js"></script>
+		
+		<link rel="stylesheet" type="text/css" href="css/term_styles.css">
+		<script src="js/termlib_min.js"></script>
+		
 		<!-- -->
+		<!--
 		<script src="turbulenz_fullscreen.js"></script>
-		<script src="turbulenz_protolib_terminal.js"></script>
-		<script> </script>
-		<div id="ui_scene"></div>
-		<button class="pure-button pure-button" id="toolbutton">Tools</button>
-		<div id="term_console"></div>
+		
+		-->
+		<script src="jse/turbulenz_protolib_terminal.js"></script>
+		
+		<script>	
+			$(function() {
+				$( "#dialog_term" ).dialog({autoOpen: false});
+				//$( "#dialog_term" ).dialog();
+			});
+			
+			//$( "#dialog_term" ).dialog('open');
+		</script>	
+		
+		
+		<script>		
+			var term = new Terminal({
+				handler: termHandler,
+				termDiv: "termDiv1"
+			});
+			term.open();
+
+			function termHandler() {
+				this.newLine();
+				var line = this.lineBuffer;
+				if (line != "") {
+				this.write("You typed: "+line);
+				}
+				this.prompt();
+			}
+		</script>
+		
+		
+		<script>
+			$(document).ready(function () {
+				$('body').layout({ 
+					applyDefaultStyles: true,
+					onresize: function () {
+						//console.log("redraw?");
+					},
+					south__onresize: function (panel,_div) {
+						//console.log(panel);
+						//console.log(_div.height());
+						//console.log(_div.width());
+						if(!$('#term_console').terminal().resize(_div.width(),_div.height())){};
+					}
+				});
+				$('body').layout().bindButton('#toggleAllPanes', 'toggle', 'north');
+				$('body').layout().bindButton('#toggleAllPanes', 'toggle', 'south');
+				$('body').layout().bindButton('#toggleAllPanes', 'toggle', 'west');
+				$('body').layout().bindButton('#toggleAllPanes', 'toggle', 'east');
+				var myLayout = $('body').layout();
+				myLayout.sizePane("east", 300);
+			});
+		</script>
+		
+	</head>
+	<body id="mainbody" class="mousetrap" style="width:100%;height:100%;">
+		
+		<div class="ui-layout-center">
+			<canvas id="canvas" type="application/vnd.turbulenz" width="600px" height="480px"></canvas>
+		</div>
+		<div class="ui-layout-north" style="height:128px;"> <!-- north -->
+			<!--
+			<i class="uk-icon-github"></i>
+			-->
+			<ul class="uk-tab uk-button-mini" data-uk-tab="{connect:'#my-id-tab'}">
+				<!-- "uk-disabled"
+				data-uk-tooltip title="wip"
+				-->
+				<li class="uk-active"><a href="">File</a></li>
+				<li><a href="#" >Config</a></li>
+				<li><a href="#" >Objects</a></li>
+				<li><a href="#" >Scene</a></li>
+				<li><a href="#" >Models</a></li>
+				<li><a href="#" >Textures</a></li>
+				<li><a href="#" >Materials</a></li>
+				<li><a href="#" >Physics</a></li>
+				<li><a href="#" >Prefabs</a></li>
+				<li><a href="#" >Console</a></li>
+				<li><a href="#" >Scripts</a></li>
+				<li><a href="#" >Help</a></li>
+			</ul>
+			
+			<ul id="my-id-tab" class="uk-switcher uk-button-mini">
+				<li>1
+					<img src="#" data-uk-tooltip title="New Map" style="height:64px;">
+					<img src="#" data-uk-tooltip title="Save Map" style="height:64px;">
+					<img src="#" data-uk-tooltip title="Save As Map" style="height:64px;">
+					<img src="#" data-uk-tooltip title="Open Map" style="height:64px;">
+				</li>
+				<li>2
+					<img src="#" data-uk-tooltip title="Host" style="height:64px;">
+					<img src="#" data-uk-tooltip title="Database" style="height:64px;">
+				</li>
+				<li>3
+					<img src="#" data-uk-tooltip title="Transform" style="height:64px;">
+					<img src="#" data-uk-tooltip title="" style="height:64px;">
+				</li>
+				<li>4
+					<img src="#" data-uk-tooltip title="Lights" style="height:64px;">
+				</li>
+				<li>5
+					<img src="#" data-uk-tooltip title="Import Model" style="height:64px;">
+				</li>
+				<li>6
+					<img src="#" data-uk-tooltip title="Import Texture" style="height:64px;">
+				</li>
+				<li>7
+					<img src="#" data-uk-tooltip title="Import Material" style="height:64px;">
+				</li>
+				<li>8
+					<img src="#" data-uk-tooltip title="Constraint" style="height:64px;">
+				</li>
+				<li>9
+					<img src="#" data-uk-tooltip title="Create" style="height:64px;">
+					<img src="#" data-uk-tooltip title="List" style="height:64px;">
+				</li>
+				<li>10
+					<img src="#" data-uk-tooltip title="Display" style="height:64px;">
+				</li>
+				<li>11
+					<img src="#" data-uk-tooltip title="New" style="height:64px;">
+					<img src="#" data-uk-tooltip title="Load" style="height:64px;">
+					<img src="#" data-uk-tooltip title="List" style="height:64px;">
+				</li>
+				<li>12
+				<img src="#" data-uk-tooltip title="Cheat Sheet" style="height:64px;">
+				<img src="#" data-uk-tooltip title="Check Update" style="height:64px;">
+				<img src="#" data-uk-tooltip title="Manual" style="height:64px;">
+				<img src="#" data-uk-tooltip title="Turbulenz docs" style="height:64px;">
+				<img src="#" data-uk-tooltip title="wiki" style="height:64px;">
+				<img src="#" data-uk-tooltip title="FAQS" style="height:64px;">
+				<img src="#" data-uk-tooltip title="Shortcut Keys" style="height:64px;">
+				<img src="#" data-uk-tooltip title="About" style="height:64px;">
+				
+				</li>
+			</ul>
+		</div>
+		<div class="ui-layout-south"> <!-- South -->
+		
+		<div id="term_console" style="width:100%;height:100%;"></div>
+		<!--
+		<div id="term_editor"></div>
+		-->
+		</div>
+		<div class="ui-layout-east"> <!-- East -->
+		
+		<div class="uk-panel uk-panel-box" id="panel_protolibomeshes">
+			<div class="uk-badge" data-uk-toggle="{target:'#toggle_protolibobjectdata'}"><label>Protolib Mesh:</label> </div>
+			
+			<div id="toggle_protolibobjectdata">
+				<button class="uk-button uk-button-mini" data-bind="click:refresh">Refresh</button>
+				<button class="uk-button uk-button-mini" data-bind="click:clear">Clear</button>
+				<table class="uk-table uk-table-hover uk-table-striped uk-table-condensed"  style="padding:0 !important;margin:0 !important;">				
+					<thead style="height:10px !important;">
+						<tr style="font-size:8;">
+							<th>Objects</th><th>Actions</th>
+						</tr>
+					</thead>			
+					<tbody data-bind="foreach: objectlist">
+						<tr>
+							<td><label class="uk-button uk-button-mini uk-button-success" data-bind="text: name, click:fnselect" style="width:100%;"> </label></td>
+							<td>
+								<div class="uk-button-group">
+								<button class="uk-button uk-button-mini" data-bind="text: text_visible,click:fnvisible" > </button>
+								<button class="uk-button uk-button-mini" data-bind="text: text_benable,click:fnenable" > </button>
+								<button class="uk-button uk-button-mini uk-button-danger" data-bind="text: text_delete" > </button>
+								</div>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		
+		
+		<div class="uk-panel uk-panel-box" id="panel_sceneobjects">
+			<div class="uk-badge" data-uk-toggle="{target:'#toggle_sceneobjectdata'}"><label> Scene:</label> </div>
+			<div id="toggle_sceneobjectdata">
+				<button class="uk-button uk-button-mini" data-bind="click:refresh">Refresh</button>
+				<button class="uk-button uk-button-mini" data-bind="click:clear">Clear</button>
+				<table class="uk-table uk-table-hover uk-table-striped uk-table-condensed"  style="padding:0 !important;margin:0 !important;">				
+					<thead style="height:10px !important;">
+						<tr style="font-size:8;">
+							<th>Objects</th><th>Actions</th>
+						</tr>
+					</thead>			
+					<tbody data-bind="foreach: objectlist">
+						<tr>
+							<td><label class="uk-button uk-button-mini uk-button-success" data-bind="text: name, click:fnselect" style="width:100%;"> </label></td>
+							<td>
+								<div class="uk-button-group">
+								
+								<!--
+								<button class="uk-button uk-button-mini" data-bind="text: text_select, click:fnselect" > </button>
+								-->
+								<button class="uk-button uk-button-mini" data-bind="text: text_visible,click:fnvisible" > </button>
+								<button class="uk-button uk-button-mini" data-bind="text: text_benable,click:fnenable" > </button>
+								<button class="uk-button uk-button-mini uk-button-danger" data-bind="text: text_delete" > </button>
+								</div>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		
+		<div class="uk-panel uk-panel-box" id="panel_object">
+			<h4 class="uk-badge" data-uk-toggle="{target:'#toggle_objectdata'}">
+			<label> Object: </label>
+			<label data-bind="text: name"> </label>
+			</h4>
+			<div id="toggle_objectdata">
+				<label>Position</label>
+				<br><label>x</label>
+				<input type="text" placeholder="" data-bind="value: px">
+				<br><label>y</label>
+				<input type="text" placeholder="" data-bind="value: py">
+				<br><label>z</label>
+				<input type="text" placeholder="" data-bind="value: pz">
+				
+				<br><label>Rotation</label>
+				<br><label>r0</label>
+				<input type="text" placeholder="" data-bind="value: r0">
+				<br><label>r1</label>
+				<input type="text" placeholder="" data-bind="value: r1">
+				<br><label>r2</label>
+				<input type="text" placeholder="" data-bind="value: r2">
+				<br><label>r3</label>
+				<input type="text" placeholder="" data-bind="value: r3">
+				
+				<br><label>Scale</label>
+				<br><label>x</label>
+				<input type="text" placeholder="" data-bind="value: sx">
+				<br><label>y</label>
+				<input type="text" placeholder="" data-bind="value: sy">
+				<br><label>z</label>
+				<input type="text" placeholder="" data-bind="value: sz">
+			
+			
+			</div>
+		</div>
+		
+		<div class="uk-panel uk-panel-box" id="panel_objectphysics">
+			<h4 class="uk-badge" data-uk-toggle="{target:'#toggle_objectphysics'}">
+			<label>Object Physics: </label>
+			<label data-bind="text: name"> </label>
+			</h4>
+			<div id="toggle_objectphysics">
+				<label>Position</label>
+				<br><label>x</label>
+				<input type="text" placeholder="" data-bind="value: px">
+				<br><label>y</label>
+				<input type="text" placeholder="" data-bind="value: py">
+				<br><label>z</label>
+				<input type="text" placeholder="" data-bind="value: pz">
+				
+				<br><label>Rotation</label>
+				<br><label>r0</label>
+				<input type="text" placeholder="" data-bind="value: r0">
+				<br><label>r1</label>
+				<input type="text" placeholder="" data-bind="value: r1">
+				<br><label>r2</label>
+				<input type="text" placeholder="" data-bind="value: r2">
+				<br><label>r3</label>
+				<input type="text" placeholder="" data-bind="value: r3">
+				
+				<br><label>Scale</label>
+				<br><label>x</label>
+				<input type="text" placeholder="" data-bind="value: sx">
+				<br><label>y</label>
+				<input type="text" placeholder="" data-bind="value: sy">
+				<br><label>z</label>
+				<input type="text" placeholder="" data-bind="value: sz">
+			
+			
+			</div>
+		</div>
+		
+		</div>
+		<div class="ui-layout-west"> <!-- west -->
+			<div id="panel_tool_object">
+				<div class="uk-panel uk-panel-box">
+				<button class="uk-button uk-button-mini uk-button-expand uk-button-primary" data-uk-toggle="{target:'#my-tool'}">Tools</button>
+				<div id="my-tool" class="uk-button-group">					
+					<a class="uk-button uk-button-mini uk-button-success" href="#">Move</a>
+					<a class="uk-button uk-button-mini uk-button-success" href="#">Rotate</a>
+					<a class="uk-button uk-button-mini uk-button-success" href="#">Sacle</a>
+				</div>
+				<button class="uk-button uk-button-mini uk-button-expand uk-button-primary" data-uk-toggle="{target:'#my-shapes'}">Shapes</button>				
+				<div id="my-shapes" class="uk-button-group">
+						<a class="uk-button uk-button-mini" href="#">Cube</a>
+						<a class="uk-button uk-button-mini" href="#">Sphere</a>
+						<a class="uk-button uk-button-mini" href="#">Cone</a>
+						<a class="uk-button uk-button-mini" href="#">Capsule</a>
+						<br>
+						<a class="uk-button uk-button-mini" href="#">Character</a>
+						<a class="uk-button uk-button-mini" href="#">Custom Shape</a>
+				</div>
+				<button class="uk-button uk-button-mini uk-button-expand">Build</button>				
+				<button class="uk-button uk-button-mini uk-button-expand" data-bind="text:text_snapgrid, click:fungridsnap">Snap Grid[on]</button>
+				<input type="text" placeholder="1" data-bind="">
+				<button class="uk-button uk-button-mini uk-button-expand" data-bind="text:text_snaprot, click:funsnaprot">Snap Rotate[off]</button>
+				<input type="text" placeholder="1" data-bind="">
+				<button class="uk-button uk-button-mini uk-button-expand" data-bind="text:text_snapscale, click:funsnapscale">Snap Scale[off]</button>
+				<input type="text" placeholder="1" data-bind="">
+				<!--
+				<button class="uk-button uk-button-mini uk-button-expand" data-bind="text:text_physics, click:funphysics"></button>
+				<button class="uk-button uk-button-mini uk-button-expand" data-bind="text:text_world, click:funworld"></button>
+				<button class="uk-button uk-button-mini uk-button-expand" data-bind="text:text_input, click:funinput"></button>
+				-->
+				<button class="uk-button uk-button-mini uk-button-expand" data-bind="text:text_cameraController, click:funcameraController"></button>
+				<button class="uk-button uk-button-mini uk-button-expand" data-bind="text:text_debug, click:fundebug"></button>
+				
+				<button class="uk-button uk-button-mini uk-button-expand uk-button-danger">Reset</button>
+				</div>
+			</div>
+		</div>
+				
+		<div id="my-left" class="uk-offcanvas">
+			<div class="uk-offcanvas-bar">
+				<div class="uk-panel">
+					<h3 class="uk-panel-title" > Report? </h3>
+				</div>
+				<form class="uk-search">
+					<input class="uk-search-field" type="search" placeholder="search...">
+				</form>
+				<ul class="uk-nav uk-nav-offcanvas" data-uk-nav>
+					<li class="uk-active"><a link="#">Test1</a></li>
+					<li><a link="#">Test2</a></li>
+					<li><a link="#">Test3</a></li>
+				</ul>
+				<div class="uk-panel-badge uk-badge">W.I.P</div>
+				
+				<div class="uk-panel">hello world ^^)></div>
+			</div>
+		</div>
+		<div id="my-right" class="uk-offcanvas">
+			<div class="uk-offcanvas-bar uk-offcanvas-bar-flip">
+				<div class="uk-badge">WIP</div>
+				<div class="uk-panel">
+					<h3 class="uk-panel-title" > Debug? </h3>
+				</div>
+				<ul class="uk-nav uk-nav-side">
+					<li class="uk-active"><a href="#">Test</a></li>
+					<li class=""><a href="#">Te</a></li>
+				</ul>
+			</div>
+		</div>
+		
+		<div id="toolbutton" class="uk-button-group">
+			<button class="uk-button uk-button-mini uk-icon-toggle-left" data-uk-offcanvas="{target:'#my-left'}" ></button>
+			<button class="uk-button uk-button-mini uk-icon-cog" type="button" id="toggleAllPanes"> Tools </button>
+			<a class="uk-button uk-button-mini uk-icon-cog" type="button" href="javascript:term.open();" onfocus="if(this.blur)this.blur();" onmouseover="window.status='terminal 1'; return true" onmouseout="window.status=''; return true" > Term open</a>
+			<a class="uk-button uk-button-mini uk-icon-cog" type="button" href="javascript:term.close();"> Term close</a>
+			<button class="uk-button uk-button-mini uk-icon-toggle-right" data-uk-offcanvas="{target:'#my-right'}" >  </button>
+		</div>
+		
+		
+		<div id="dialog_term" title="Basic dialog">
+			<!--
+			<div id="termDiv1" style="position:absolute; top:0px; left:0px;"></div>
+			-->
+			<div id="termDiv1" style=""></div>
+		</div>
 	</body>
+	
 </html>

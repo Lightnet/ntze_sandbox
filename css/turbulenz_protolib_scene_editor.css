@@ -37,41 +37,34 @@ body{
 }
 
 .ui-layout-pane-south {
-    overflow: hidden !important;
+	overflow: hidden !important;
 	margin:0 !important;
 	padding:0 !important;
 }
 
+.ui-layout-pane-west {
+	margin:0 !important;
+	padding:0 !important;
+}
+.ui-layout-pane-east {
+	margin:0 !important;
+	padding:0 !important;
+}
 
 #term_console{
-	position:absolute;
-	bottom:0; 
-	margin:0; 
-	padding:0;
+	#position:absolute;
+	#bottom:0; 
+	#margin:0; 
+	#padding:0;
+	#z-index‎:-10000;
+	#visibility: visible;
 }
 
-#toolbutton{
-	position:absolute;
-	bottom:0; 
-	margin:4;
-	left:0;
-	padding:4;
-}
-
-#ui_scene{
-	position:fixed;
-	top:0;
-	#left:0;
-	float:left;
-	
-	margin:0;
-	padding:0;
-}
 #toolbutton{
 	position:absolute;
 	bottom:0;
-	margin:0;
-	padding:0;
+	#margin:0;
+	#padding:0;
 }
 
 #menunav{

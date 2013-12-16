@@ -1,35 +1,55 @@
+var serverconfig = function (){
+	var self = this;
+	self.state = ko.observable("Status [offline]");
+	self.usersonline = ko.observable("Users [0]");
+	
+	var oncheck = self.oncheck= function (){
+		if(IsServerUp !=null){
+			
+			if(IsServerUp == "true"){
+				self.state("Status [online]");
+				console.log(self.state);
+			}else{
+				self.state("Status [offline]");
+				console.log(self.state);
+			}
+			console.log("found!");
+		}	
+	}
+	oncheck();
+};
+
+window.onload=function(){
+	ko.applyBindings(new serverconfig(),document.getElementById("serverstate"));
+};
+
 var helptext = "";
+helptext += "[[gib;#FFFFFF;#000]say], ";
+helptext += "[[gib;#993399;#000]pm], ";
+helptext += "[[gib;#FFFFFF;#000]local], ";
+helptext += "[[gib;#FF7700;#000]world], ";
+helptext += "[[gib;#FF6600;#000]shout], ";
 
-//helptext += "[[gib;#FFFFFF;#000]say], ";
-//helptext += "[[gib;#993399;#000]pm], ";
-//helptext += "[[gib;#FFFFFF;#000]local], ";
-//helptext += "[[gib;#FF7700;#000]world], ";
-//helptext += "[[gib;#FF6600;#000]shout], ";
+helptext += "[[gib;#99FF66;#000]clan], ";
+helptext += "[[gib;#00CCFF;#000]team], ";
+helptext += "[[gib;#00CCFF;#000]squard], ";
 
-//helptext += "[[gib;#99FF66;#000]clan], ";
-//helptext += "[[gib;#00CCFF;#000]team], ";
-//helptext += "[[gib;#00CCFF;#000]squard], ";
+helptext += "[[gib;#00CCFF;#000]party], ";
 
-//helptext += "[[gib;#00CCFF;#000]party], ";
-
-//helptext += "[[gib;#FF0000;#000]admin], ";
-//helptext += "[[gib;#FF9999;#000]gm], ";
-//helptext += "[[gib;#FF9999;#000]map], ";
-//helptext += "[[gib;#FF9999;#000]item], ";
-//helptext += "[[gib;#FF9999;#000]spawn], ";
+helptext += "[[gib;#FF0000;#000]admin], ";
+helptext += "[[gib;#FF9999;#000]gm], ";
+helptext += "[[gib;#FF9999;#000]map], ";
+helptext += "[[gib;#FF9999;#000]item], ";
+helptext += "[[gib;#FF9999;#000]spawn], ";
 
 helptext += "[[gib;#FF9999;#000]listobjects], ";
 helptext += "[[gib;#FF9999;#000]reset], ";
 helptext += "[[gib;#FF9999;#000]protolib], ";
 helptext += "[[gib;#FF9999;#000]fullscreen | fs], ";
 helptext += "[[gib;#FF9999;#000]hideconsole | hc], ";
-helptext += "[[gib;#FF9999;#000]debug], ";
-helptext += "[[gib;#FF9999;#000]spawn [cube,mesh]], ";
-
-
 
 $(function() {
-	$('#term_console').terminal(
+	$('#term_serverconsole').terminal(
 		function(command, term) {
 			console.log(command);
 			console.log(term);
@@ -38,6 +58,24 @@ $(function() {
 				
 				var textinfp = "";
 				textinfp += helptext;
+				
+				/*
+				textinfp += "[[gib;#FFFFFF;#000]say] ";
+				textinfp += "[[gib;#FFFFFF;#000]local], ";
+				textinfp += "[[gib;#FF6600;#000]shout], ";
+				textinfp += "[[gib;#FF7700;#000]world], ";
+				
+				textinfp += "[[gib;#99FF66;#000]clan], ";
+				textinfp += "[[gib;#00CCFF;#000]team], ";
+				textinfp += "[[gib;#993399;#000]pm], ";
+				textinfp += "[[gib;#00CCFF;#000]party], ";
+				
+				textinfp += "[[gib;#FF0000;#000]admin], ";
+				textinfp += "[[gib;#FF9999;#000]gm], ";
+				
+				textinfp += "test ";
+				*/
+				//helptext = textinfp;
 				term.echo(textinfp);
 			}
 			if(command == 'team'){
@@ -67,7 +105,18 @@ $(function() {
 			}
 			
 			if(command == 'psl'){
+				//console.log(protolib.globals.scene.rootNodes.length);
+				//console.log(protolib.globals.scene.rootNodes);
+				
 				console.log(protolib.globals.scene);
+				
+				//var clone = protolib.globals.scene.rootNodes[1].clone();
+				//console.log(clone);
+				//clone.position.set(0,0,1);
+				//clone.setLocation(0,0,0);
+				//console.log(clone.position);
+				//protolib.globals.scene.rootNodes.push(clone);
+				
 				term.echo(protolib.globals.scene.rootNodes);
 			}
 			
@@ -79,7 +128,7 @@ $(function() {
 			if((command == 'fullscreen')||(command == 'fs')){
 				ToggleFullScreen_mode();
 				console.log(Window.isFullscreen);
-				//console.log(gui);
+				console.log(gui);
 			}
 			
 			if((command == 'mesh')){
@@ -100,20 +149,6 @@ $(function() {
 				}
 			}
 			
-			if((command == 'debug')){
-				if(turbulenz_app !=null){
-					//turbulenz_app.End_Frame();
-					//if(turbulenz_app.DebugToggle !=null){
-						turbulenz_app.DebugToggle();
-					//}
-				}
-			}
-			
-			if((command == 'dscene')){
-				if(turbulenz_app !=null){
-						turbulenz_app.displaysceneobject();
-				}
-			}
 			
 			if (command !== '') {
 				//var result = window.eval(command);
@@ -121,46 +156,18 @@ $(function() {
 					//term.echo(String(result));
 				//}
 			}
-			
-			var args = command.split(" ");
-			console.log(args);
-			//console.log(args.join(" "));
-			//console.log(command);
-			//console.log("args[0]: " + args[0]);
-			if(args[0] == "spawn"){
-				console.log(args[1]);
-				if(args[1] == "cube"){
-					if(turbulenz_app !=null){
-						turbulenz_app.CreatePhysicsCube();
-					}
-				}
-				
-				if(args[1] == "mesh"){
-					if(turbulenz_app !=null){
-						turbulenz_app.SpawnMesh();
-					}
-				}
-			}
-			
-			if(args[0] == "find"){
-				if(args[1] != null){
-					turbulenz_app.findsceneobject(args[1]);
-				}
-			}
-			
-			
-			
-			
 		},
 		{
 			greetings: '[[[gib;#00FFFF;#000]Welcome to Console]] [[[gib;#00FFFF;#000]type help for commands]]',
-			prompt: '[[gib;#00ee11;#000]command] > ',
-			height: 150,
-			width: 780
+			//prompt: '[[gib;#00ee11;#000]command] > ',
+			prompt: '>',
+			height: "150px",
+			width: "600px"
 		}
 	);
 	
-	$('#term_console').terminal().echo(helptext);
+	//$('#term_serverconsole').terminal().echo(helptext);
+	/*
 	//$('#term_console').terminal().echo("ldkfjsldkjfl");
 	$('#term_console').hide();
 	Mousetrap.bind('`', function() { 
@@ -173,18 +180,5 @@ $(function() {
 			$('#term_console').show();
 		}
 	});
-});
-
-$(document.body).on('keydown', function(e) {
-	//console.log(e.which);
-	if(e.which == 192){
-		if($('#term_console').is(":visible")){
-			$('#term_console').terminal().focus(false);
-			$('#term_console').hide();
-		}else{
-			$('#term_console').terminal().focus(true);
-			$('#term_console').show();
-		}
-		console.log("toggle show?"+$('#term_console').is(":visible"));
-	}
+	*/
 });
