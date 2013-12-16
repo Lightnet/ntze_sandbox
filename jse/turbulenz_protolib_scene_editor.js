@@ -85,6 +85,102 @@ var TurbulenzModel = function(){
 	self.text_cameraController = ko.observable('Camera Controller[on]');
 	self.text_debug = ko.observable('Debug[on]');
 	
+	self.text_screenx = ko.observable('800');
+	self.screenx = ko.observable('800');
+	self.text_screeny = ko.observable('600');
+	self.screeny = ko.observable('600');
+	
+	self.ratio = ko.observableArray(['5:4', '4:3', '3:2','8:5','5:3','16:9','17:9']);
+	self.ratio54 = ko.observableArray(['352x288', '1280x854', '2560x2048']);
+	self.ratio43 = ko.observableArray(['320x240', '384x288', '640x480','768x576','800x600','1024x768','1152x864','1280x960','1400x1050','1440x1080']);
+	self.ratio32 = ko.observableArray(['480x320', '1152x768', '1440x960']);
+	self.ratio85 = ko.observableArray(['320x200','1440x900','1680x1050','1920x1200']);
+	self.ratio53 = ko.observableArray(['800x480', '1280x768']);
+	self.ratio54 = ko.observableArray(['1280x1024', '2560x2048','5120x4096']);
+	self.ratio169 = ko.observableArray(['854x480', '1024x576', '1280x720','1366x768','1600x900','1920x1080','2560x1440']);
+	self.ratio1610 = ko.observableArray(['320x200', '640x400', '1280x800','1440x900','1680x1050','1920x1200','2560x1600','3840x2400','7680x4800']);
+	self.ratio179 = ko.observableArray(['2048x1080']);
+	
+	self.screensize = ko.observableArray(['352x288', '1280x854', '2560x2048']);
+	
+	self.ratioset = ko.observable('5:4');
+	self.screenratioset = ko.observable(['352x288']);
+	
+	self.ratioselect = function (){
+		//console.log("select");
+		//console.log(self.ratioset());
+		//console.log(self.ratio54());
+		if(self.ratioset() == "5:4"){
+			//console.log('found 5:4');
+			self.screensize(self.ratio54());
+			//console.log(self.ratio54()[0]);
+			self.screenratioset([self.ratio54()[0]]);
+		}
+		if(self.ratioset() == "4:3"){
+			//console.log('found 4:3');
+			self.screensize(self.ratio43());
+			self.screenratioset([self.ratio43()[0]]);
+		}
+		if(self.ratioset() == '3:2'){
+			self.screensize(self.ratio32());
+			self.screenratioset([self.ratio32()[0]]);
+		}
+		if(self.ratioset() == '3:2'){
+			self.screensize(self.ratio32());
+			self.screenratioset([self.ratio32()[0]]);
+		}
+		if(self.ratioset() == '8:5'){
+			self.screensize(self.ratio85());
+			self.screenratioset([self.ratio85()[0]]);
+		}
+		if(self.ratioset() == '5:3'){
+			self.screensize(self.ratio53());
+			self.screenratioset([self.ratio53()[0]]);
+		}
+		if(self.ratioset() == '16:9'){
+			self.screensize(self.ratio169());
+			self.screenratioset([self.ratio169()[0]]);
+		}
+		if(self.ratioset() == '17:9'){
+			self.screensize(self.ratio179());
+			self.screenratioset([self.ratio179()[0]]);
+		}
+		//console.log(self.screensize());
+	};
+	
+	self.screenratioselect = function (){
+		console.log(self.screenratioset());
+		
+		//var res = str.split(" ");
+	}
+	
+	
+	
+	self.updatescreen = function (){
+		var canvas = document.getElementById("canvas");
+		
+		var screenr = self.screenratioset()[0];
+		console.log(screenr);
+		var res = screenr.split("x");
+		console.log(res[0]);
+		console.log(res[1]);
+		
+		canvas.width = res[0];
+		canvas.height = res[1];
+		//console.log(canvas.height);
+		//console.log(self.screenx());
+	}
+	
+	self.scalescreen = function (){
+		var canvas = document.getElementById("canvas");
+		//console.log(canvas.height);
+		//console.log(self.screenx());
+		
+		canvas.width = self.screenx();
+		canvas.height = self.screeny();
+	}
+	
+	
 	self.funinput = function (){	
 		if(turbulenz_app.fninput() == true){
 			self.text_input('Input[on]');
@@ -388,7 +484,8 @@ TurbulenzEngine.onload = function onloadFn() {
 	var intervalID;
 	//intervalID = TurbulenzEngine.setInterval(update, 1000 / 60);
 	//TurbulenzEngine.clearInterval(intervalID);
-	
+	var screen_width = 800;
+	var screen_height = 600;
 	var rotationMatrix = null;
 	var rotationAngleMatrix = null;
 	
@@ -1813,6 +1910,8 @@ TurbulenzEngine.onload = function onloadFn() {
 		}
         var deviceWidth = graphicsDevice.width;
         var deviceHeight = graphicsDevice.height;
+		DrawText("screen:"+deviceWidth+":"+deviceHeight,20,10);
+		
 		updateAspectRatio();
 		
 		/*
@@ -1834,8 +1933,8 @@ TurbulenzEngine.onload = function onloadFn() {
 		}
 		
 		
-		DrawText("scene rootNodes: "+scene.rootNodes.length,50,10);
-		DrawText("physics Nodes: "+physicsManager.physicsNodes.length,50,30);
+		DrawText("scene rootNodes: "+scene.rootNodes.length,10,30);
+		DrawText("physics Nodes: "+physicsManager.physicsNodes.length,10,40);
 		
 		//var mousePos = protolib.getMousePosition();
 		var pos = mathDevice.v3Build(0, 0, 0);
@@ -2025,3 +2124,4 @@ TurbulenzEngine.onload = function onloadFn() {
 	
 	return this;
 };
+

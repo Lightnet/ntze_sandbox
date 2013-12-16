@@ -109,12 +109,50 @@
 		
 		-->
 		<script src="jse/turbulenz_protolib_terminal.js"></script>
-		
+		<style>
+			#draggable { width: 150px; height: 150px; padding: 0.5em; }
+		</style>
 		<script>	
+			/*
+			$(function() {
+				$( "#dialog_term" ).draggable({ zIndex: 10000 });
+				//$( "#dialog_term" ).dialog();
+			});
+			function ToggleTerm(){
+				console.log("?");
+				if($('#dialog_term').is(":visible")){
+					$( "#dialog_term" ).hide();
+					$( "#dialog_term" ).draggable( "option", "zIndex", 10000 );
+					console.log("0");
+					term.close();
+				}else{
+					$( "#dialog_term" ).show();
+					$( "#dialog_term" ).draggable( "option", "zIndex", 10000 );
+					term.open();
+					console.log("1");
+				}
+			}
+			*/
+		
+			
 			$(function() {
 				$( "#dialog_term" ).dialog({autoOpen: false});
 				//$( "#dialog_term" ).dialog();
 			});
+			
+			function ToggleTerm(){
+				console.log("?");
+				if($('#dialog_term').is(":visible")){
+					$( "#dialog_term" ).dialog('close');
+					//console.log("0");
+					term.close();
+				}else{
+					$( "#dialog_term" ).dialog('open');
+					term.open();
+					//console.log("1");
+				}
+			}
+			
 			
 			//$( "#dialog_term" ).dialog('open');
 		</script>	
@@ -122,10 +160,13 @@
 		
 		<script>		
 			var term = new Terminal({
+				cols:40,
+				rows:10,
 				handler: termHandler,
 				termDiv: "termDiv1"
 			});
-			term.open();
+			console.log(term);
+			//term.open();
 
 			function termHandler() {
 				this.newLine();
@@ -165,7 +206,10 @@
 	<body id="mainbody" class="mousetrap" style="width:100%;height:100%;">
 		
 		<div class="ui-layout-center">
+			<canvas id="canvas" type="application/vnd.turbulenz" ></canvas>
+			<!--
 			<canvas id="canvas" type="application/vnd.turbulenz" width="600px" height="480px"></canvas>
+			-->
 		</div>
 		<div class="ui-layout-north" style="height:128px;"> <!-- north -->
 			<!--
@@ -421,6 +465,28 @@
 				<button class="uk-button uk-button-mini uk-button-expand" data-bind="text:text_debug, click:fundebug"></button>
 				
 				<button class="uk-button uk-button-mini uk-button-expand uk-button-danger">Reset</button>
+				
+				<select data-bind="
+				options: ratio,
+				selectedOptions: ratioset,
+				optionsText: function(item) {
+					//console.log(item);
+					return item;
+				},
+				event: {change: ratioselect}
+				"></select>
+				<select data-bind="
+				options: screensize,
+				selectedOptions: screenratioset,
+				event: {change: screenratioselect}
+				"></select>
+				<button class="uk-button uk-button-mini uk-button-expand uk-button-danger" data-bind="click:updatescreen">Set Screen</button>
+				
+				<input type="text" placeholder="800" data-bind="value:screenx">
+				<input type="text" placeholder="600" data-bind="value:screeny">
+				<button class="uk-button uk-button-mini uk-button-expand uk-button-danger" data-bind="click:scalescreen">Scale Screen</button>
+				<button class="uk-button uk-button-mini uk-button-expand uk-button-danger" data-bind="click:scalescreen">Scale Canvas[on]</button>
+				
 				</div>
 			</div>
 		</div>
@@ -459,13 +525,17 @@
 		<div id="toolbutton" class="uk-button-group">
 			<button class="uk-button uk-button-mini uk-icon-toggle-left" data-uk-offcanvas="{target:'#my-left'}" ></button>
 			<button class="uk-button uk-button-mini uk-icon-cog" type="button" id="toggleAllPanes"> Tools </button>
-			<a class="uk-button uk-button-mini uk-icon-cog" type="button" href="javascript:term.open();" onfocus="if(this.blur)this.blur();" onmouseover="window.status='terminal 1'; return true" onmouseout="window.status=''; return true" > Term open</a>
+			<a class="uk-button uk-button-mini uk-icon-cog" type="button" href="javascript:ToggleTerm();"> Term</a>
+			
+			<!--
+			<a class="uk-button uk-button-mini uk-icon-cog" type="button" href="javascript:term.open();" onfocus="if(this.blur)this.blur();" onmouseover="window.status='terminal 1'; return true" onmouseout="window.status=''; return true" > Term</a>
 			<a class="uk-button uk-button-mini uk-icon-cog" type="button" href="javascript:term.close();"> Term close</a>
+			-->
 			<button class="uk-button uk-button-mini uk-icon-toggle-right" data-uk-offcanvas="{target:'#my-right'}" >  </button>
 		</div>
 		
 		
-		<div id="dialog_term" title="Basic dialog">
+		<div id="dialog_term" class="ui-widget-content" title="Basic dialog">
 			<!--
 			<div id="termDiv1" style="position:absolute; top:0px; left:0px;"></div>
 			-->

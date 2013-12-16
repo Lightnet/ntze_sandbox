@@ -1,4 +1,4 @@
-var canvas_engine = document.getElementById("mainbody");
+//var canvas_engine = document.getElementById("mainbody");
 //var gamewidth =  canvas.width;
 //var gameheight =  canvas.height;
 
@@ -17,8 +17,8 @@ function requestFullScreen(element) {
 	//console.log("fullscreen");
 }
 
-var elem = document.body; // Make the body go full screen.
-requestFullScreen(elem);
+//var elem = document.body; // Make the body go full screen.
+//requestFullScreen(elem);
 
 
 document.addEventListener("webkitfullscreenchange", function () {
