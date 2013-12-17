@@ -65,20 +65,427 @@ var __extends = this.__extends || function (d, b) {
 /*global InterpolatorController: false */
 /*global HTMLControls: false */
 
+var scenelistmodel;
+var objectmodel;
+var _mathDevice;
+var protolibmeshmodel;
+var turbulenzmodel;
+
+
+var TurbulenzModel = function(){
+	var self = this;
+	self.name = ko.observable('none');
+	self.text_snapgrid = ko.observable('Snap Grid[on]');
+	self.text_snappos = ko.observable('Snap Pos[on]');
+	self.text_snaprot = ko.observable('Snap Rotate[off] ');
+	self.text_snapscale = ko.observable('Snap Scale[off]');
+	self.text_physics = ko.observable('Physics Manager[on]');
+	self.text_world = ko.observable('Dynamics World[on]');
+	self.text_input = ko.observable('Input[on]');
+	self.text_cameraController = ko.observable('Camera Controller[on]');
+	self.text_debug = ko.observable('Debug[on]');
+	
+	self.text_screenx = ko.observable('800');
+	self.screenx = ko.observable('800');
+	self.text_screeny = ko.observable('600');
+	self.screeny = ko.observable('600');
+	
+	self.ratio = ko.observableArray(['5:4', '4:3', '3:2','8:5','5:3','16:9','17:9']);
+	self.ratio54 = ko.observableArray(['352x288', '1280x854', '2560x2048']);
+	self.ratio43 = ko.observableArray(['320x240', '384x288', '640x480','768x576','800x600','1024x768','1152x864','1280x960','1400x1050','1440x1080']);
+	self.ratio32 = ko.observableArray(['480x320', '1152x768', '1440x960']);
+	self.ratio85 = ko.observableArray(['320x200','1440x900','1680x1050','1920x1200']);
+	self.ratio53 = ko.observableArray(['800x480', '1280x768']);
+	self.ratio54 = ko.observableArray(['1280x1024', '2560x2048','5120x4096']);
+	self.ratio169 = ko.observableArray(['854x480', '1024x576', '1280x720','1366x768','1600x900','1920x1080','2560x1440']);
+	self.ratio1610 = ko.observableArray(['320x200', '640x400', '1280x800','1440x900','1680x1050','1920x1200','2560x1600','3840x2400','7680x4800']);
+	self.ratio179 = ko.observableArray(['2048x1080']);
+	
+	self.screensize = ko.observableArray(['352x288', '1280x854', '2560x2048']);
+	
+	self.ratioset = ko.observable('5:4');
+	self.screenratioset = ko.observable(['352x288']);
+	
+	self.ratioselect = function (){
+		//console.log("select");
+		//console.log(self.ratioset());
+		//console.log(self.ratio54());
+		if(self.ratioset() == "5:4"){
+			//console.log('found 5:4');
+			self.screensize(self.ratio54());
+			//console.log(self.ratio54()[0]);
+			self.screenratioset([self.ratio54()[0]]);
+		}
+		if(self.ratioset() == "4:3"){
+			//console.log('found 4:3');
+			self.screensize(self.ratio43());
+			self.screenratioset([self.ratio43()[0]]);
+		}
+		if(self.ratioset() == '3:2'){
+			self.screensize(self.ratio32());
+			self.screenratioset([self.ratio32()[0]]);
+		}
+		if(self.ratioset() == '3:2'){
+			self.screensize(self.ratio32());
+			self.screenratioset([self.ratio32()[0]]);
+		}
+		if(self.ratioset() == '8:5'){
+			self.screensize(self.ratio85());
+			self.screenratioset([self.ratio85()[0]]);
+		}
+		if(self.ratioset() == '5:3'){
+			self.screensize(self.ratio53());
+			self.screenratioset([self.ratio53()[0]]);
+		}
+		if(self.ratioset() == '16:9'){
+			self.screensize(self.ratio169());
+			self.screenratioset([self.ratio169()[0]]);
+		}
+		if(self.ratioset() == '17:9'){
+			self.screensize(self.ratio179());
+			self.screenratioset([self.ratio179()[0]]);
+		}
+		//console.log(self.screensize());
+	};
+	
+	self.screenratioselect = function (){
+		console.log(self.screenratioset());
+		
+		//var res = str.split(" ");
+	}
+	
+	
+	
+	self.updatescreen = function (){
+		var canvas = document.getElementById("canvas");
+		
+		var screenr = self.screenratioset()[0];
+		console.log(screenr);
+		var res = screenr.split("x");
+		console.log(res[0]);
+		console.log(res[1]);
+		
+		canvas.width = res[0];
+		canvas.height = res[1];
+		//console.log(canvas.height);
+		//console.log(self.screenx());
+	}
+	
+	self.scalescreen = function (){
+		var canvas = document.getElementById("canvas");
+		//console.log(canvas.height);
+		//console.log(self.screenx());
+		
+		canvas.width = self.screenx();
+		canvas.height = self.screeny();
+	}
+	
+	
+	self.funinput = function (){	
+		if(turbulenz_app.fninput() == true){
+			self.text_input('Input[on]');
+		}else{
+			self.text_input('Input[off]');
+		}		
+	}
+	
+	self.funcameraController = function (){
+		console.log("toggle fndebugMode");		
+		if(turbulenz_app.fncameraController() == true){
+			self.text_cameraController('Camera Controller[on]');
+		}else{
+			self.text_cameraController('Camera Controller[off]');
+		}	
+	}
+	
+	self.fundebug = function (){
+		if(turbulenz_app.fndebugMode() == true){
+			self.text_debug('Debug Mode[on]');
+		}else{
+			self.text_debug('Debug Mode[off]');
+		}		
+	}
+	
+	self.fungridsnap = function (){	
+		if(turbulenz_app.fnGridSnap() == true){
+			self.text_snapgrid('Snap Grid[on]');
+		}else{
+			self.text_snapgrid('Snap Grid[off]');
+		}		
+	}
+	
+	self.funsnaprot = function (){
+		console.log("toggle fndebugMode");		
+		if(turbulenz_app.fnsnaprot() == true){
+			self.text_snaprot('Snap Rotate[on]');
+		}else{
+			self.text_snaprot('Snap Rotate[off]');
+		}		
+	}
+	
+	self.funsnapscale = function (){
+		console.log("toggle fndebugMode");		
+		if(turbulenz_app.fnsnapscale() == true){
+			self.text_snapscale('Snap Scale[on]');
+		}else{
+			self.text_snapscale('Snap Scale[off]');
+		}		
+	}
+	
+	self.funphysics = function (){	
+		if(turbulenz_app.fnphysics() == true){
+			self.text_physics('Physics Manager[on]');
+		}else{
+			self.text_physics('DPhysics Manager[off]');
+		}		
+	}
+	self.funworld = function (){
+		if(turbulenz_app.fnworld() == true){
+			self.text_world('Dynamics World[on]');
+		}else{
+			self.text_world('Dynamics World[off]');
+		}		
+	}
+};
+
 var _blockdata = function(){
 	this.name = "";
 	this.pos = null;
 	this.btype = "blocks";
+};
+
+var _object = function(){
+	var self = this;
 }
 
+var ProtolibMeshModel = function(){
+	var self = this;
+	self.name = ko.observable('none');
+	self.object = null;
+	self.text_select = ko.observable('Select');
+	self.text_delete = ko.observable('Delete');
+	self.text_visible = ko.observable('Visible[on]');
+	self.text_benable = ko.observable('Enable[on]');
+	self.text_physics = ko.observable('phy');
+	
+	self.process = function (){};
+	self.fnvisible = function (){
+		if(self.object.getEnabled() == true){
+			self.object.setEnabled(false);
+			self.text_visible('Visible[off]');
+		}else{
+			self.object.setEnabled(true);
+			self.text_visible('Visible[on]');
+		}
+	};
+	
+	self.fnenable = function (){
+		//if(self.object.getEnabled() == true){
+			//self.object.setEnabled(false);
+			//self.text_benable('visible[off]');
+		// }else{
+			//self.object.setEnabled(true);
+			//self.text_benable('visible[on]');
+		// }
+	};
+	
+	self.fnselect = function (){
+		console.log(self.object);
+		console.log(self.object.getEnabled());
+	};	
+};
+
+var ProtolibMeshModelView = function(){
+	var self = this;
+	self.objectlist = ko.observableArray([]);
+	
+	self.addobj = function() {
+		var _object  = new _sceneobject();
+        self.objectlist.push(_object);
+		console.log("clear...");
+    }
+	
+	self.clear = function() {
+		//self.objectlist = ko.observableArray([]);
+		self.objectlist([]);
+		console.log("clear...");
+	}
+	
+	self.refresh = function() {
+		//console.log("test?");
+		self.objectlist([]);
+		if(turbulenz_app.fnMeshes !=null){
+			console.log("found scene!");
+			var lsceneobj = turbulenz_app.fnMeshes();
+			for (var i = 0; i < lsceneobj.length;i++ ){
+				var _sobject  = new ProtolibMeshModel();
+				console.log(lsceneobj[i]);
+				_sobject.name = lsceneobj[i].node.name;
+				_sobject.object = lsceneobj[i];
+				self.objectlist.push(_sobject);
+			}
+		}
+    }	
+};
+
+
+var _objectmodel = function (){
+
+	var self = this;
+	self.name = ko.observable('none');
+	
+	
+	self.px = ko.observable('0');
+	self.py = ko.observable('0');
+	self.pz = ko.observable('0');
+	
+	self.r0 = ko.observable('0');
+	self.r1 = ko.observable('0');
+	self.r2 = ko.observable('0');
+	self.r3 = ko.observable('0');
+	
+	self.sx = ko.observable('1');
+	self.sy = ko.observable('1');
+	self.sz = ko.observable('1');
+	//self.name = 'none';
+	
+	self.setobject = function(_obj){
+		console.log(_obj);
+		console.log(_mathDevice);
+		//console.log(_obj.getLocalTransform());	
+		var _matrix = _obj.getLocalTransform();
+		console.log(_matrix);
+		var _pos3 = _mathDevice.m43Pos(_matrix);
+		//var vecScale = _mathDevice.v3ScalarBuild(1);
+		//var _scale3 = _mathDevice.m43Scale(_matrix);
+		var	_rot = _mathDevice.quatFromM43(_matrix);		
+		//console.log(_pos3);
+		console.log(_rot);
+		//console.log(_scale3);
+		self.px(_pos3[0]);
+		self.py(_pos3[1]);
+		self.pz(_pos3[2]);
+		
+		self.r0(_rot[0]);
+		self.r1(_rot[1]);
+		self.r2(_rot[2]);
+		self.r3(_rot[3]);
+		/*
+		//example usage:
+		var rotation = mathDevice.quatBuild(0, 0, 0, 1);
+		var translation = mathDevice.v3Build(10, 10, 10);
+		var scale = mathDevice.v3Build(2, 1, 1);
+		var transform = mathDevice.m43FromRTS(rotation, translation, scale);
+		*/
+		
+	}
+	
+	self.update = function(){
+	
+	
+	}
+}
+
+var _sceneobject = function(){
+	var self = this;
+	self.name = ko.observable('none');
+	self.object = null;
+	self.text_select = ko.observable('Select');
+	self.text_delete = ko.observable('Delete');
+	self.text_benable = ko.observable('Enable[on]');
+	self.text_visible = ko.observable('Visible[on]');
+	self.text_physics = ko.observable('Physics');
+	
+	self.process = function (){}
+	
+	self.fnenable = function (){
+	
+	
+		//if(self.object.getEnabled() == true){
+			//self.object.setEnabled(false);
+			//self.text_benable('visible[off]');
+		// }else{
+			//self.object.setEnabled(true);
+			//self.text_benable('visible[on]');
+		// }
+	};
+	
+	self.fnvisible = function (){
+		console.log(self.object);
+		self.object.setDynamic();
+		if(self.object.getDisabled() == true){
+			self.object.setDisabled(false);
+			//self.object.getEnabled();
+			self.text_visible('Visible[off]');
+		}else{
+			self.object.setDisabled(true);
+			self.text_visible('Visible[on]');
+		}
+	};
+	
+	self.fnselect = function (){
+		if(objectmodel !=null){
+			console.log(self.name);
+			objectmodel.name(self.name);
+			objectmodel.setobject(self.object);
+		}
+	}	
+};
+
+var _scenelistmodel = function(){
+	var self = this;
+	self.objectlist = ko.observableArray([]);
+	
+	self.addobj = function() {
+		var _object  = new _sceneobject();
+        self.objectlist.push(_object);
+		console.log("clear...");
+    }
+	
+	self.clear = function() {
+		//self.objectlist = ko.observableArray([]);
+		self.objectlist([]);
+		console.log("clear...");
+	}
+	
+	self.refresh = function() {
+		//console.log("test?");
+		self.objectlist([]);
+		if(turbulenz_app.FnSceneNodes !=null){
+			console.log("found scene!");
+			var lsceneobj = turbulenz_app.FnSceneNodes().rootNodes;
+			for (var i = 0; i < lsceneobj.length;i++ ){
+				var _sobject  = new _sceneobject();
+				_sobject.name = lsceneobj[i].name;
+				_sobject.object = lsceneobj[i];
+				self.objectlist.push(_sobject);
+			}
+		}
+    }	
+};
+//create model for the knockout.js
+scenelistmodel = new _scenelistmodel();
+objectmodel = new _objectmodel();
+turbulenzmodel = new TurbulenzModel();
+protolibmeshmodel = new ProtolibMeshModelView();
+
 TurbulenzEngine.onload = function onloadFn() {
+
+	//key bind when load into the window else it give error for some reason
+	ko.applyBindings(scenelistmodel,document.getElementById('panel_sceneobjects'));
+	ko.applyBindings(objectmodel,document.getElementById('panel_object'));
+	ko.applyBindings(turbulenzmodel,document.getElementById('panel_tool_object'));
+	ko.applyBindings(protolibmeshmodel,document.getElementById('panel_protolibomeshes'));
+	
+	
 	//console.log(TurbulenzEngine);
 	console.log("TurbulenzEngine version: "+TurbulenzEngine.version);
 	//{
 	var intervalID;
 	//intervalID = TurbulenzEngine.setInterval(update, 1000 / 60);
 	//TurbulenzEngine.clearInterval(intervalID);
-	
+	var screen_width = 800;
+	var screen_height = 600;
 	var rotationMatrix = null;
 	var rotationAngleMatrix = null;
 	
@@ -122,6 +529,7 @@ TurbulenzEngine.onload = function onloadFn() {
 	var clearColor = [0.95, 0.95, 1.0, 1.0];
 	var floor;
 	var mesh = null;
+	var meshes = [];
 	
 	var previousFrameTime = TurbulenzEngine.time;
 	var mouseForces;
@@ -223,6 +631,12 @@ TurbulenzEngine.onload = function onloadFn() {
 	var selectsinglecollisionobject;
 	
 	var bgridsnap = true;
+	var bsnaprot = true;
+	var bsnapscale = true;
+	var bphysics = true;
+	var bworld = true;
+	var bcameraController = true;
+	var binput = true;
 	
 	var blocks = [];
 	var loadobjects = [];
@@ -234,6 +648,7 @@ TurbulenzEngine.onload = function onloadFn() {
 		//console.log(version);
 		console.log(protolib);
 		mathDevice = protolib.getMathDevice();
+		_mathDevice = mathDevice;
 		graphicsDevice = protolib.getGraphicsDevice();
 		inputDevice = protolib.getInputDevice();
 		textureManager = protolib.globals.textureManager;
@@ -378,26 +793,7 @@ TurbulenzEngine.onload = function onloadFn() {
 		});
 		
 		cameraController = CameraController.create(graphicsDevice, inputDevice, camera);
-		/*
-		// Function for aspect ratio
-		updateAspectRatio = function() {
-			var aspectRatio = (graphicsDevice.width / graphicsDevice.height);
-			if(aspectRatio !== camera.aspectRatio) {
-				camera.aspectRatio = 16/9;	// Keep mine 16/9 ratio (1920/1080 that is)
-				camera.updateProjectionMatrix();
-			}
-			camera.updateViewProjectionMatrix();	
-		};
 		
-		// Set the aspect-ratio of the camera to 16/9
-		updateAspectRatio();
-		
-		rotationMatrix = mathDevice.m43BuildIdentity();
-		rotationAngleMatrix = mathDevice.m43BuildIdentity();
-		mathDevice.m43SetAxisRotation(rotationAngleMatrix,
-									  mathDevice.v3Build(0, 1, 0),
-									  (Math.PI * 2) / 360);
-		*/
 		//===========================================================
 		// Input functions
 		//===========================================================
@@ -545,7 +941,8 @@ TurbulenzEngine.onload = function onloadFn() {
 		intervalID = TurbulenzEngine.setInterval(update, 1000 / 60);
 		//console.log(intervalID);
 		floor = Floor.create(graphicsDevice, mathDevice);
-		floor.numLines = 400;
+		//floor.numLines = 400;
+		floor.numLines = 500;
 		var translateVec = mathDevice.v3Build(0, 0, -1);
 		protolib.moveCamera(translateVec);
 		
@@ -576,6 +973,17 @@ TurbulenzEngine.onload = function onloadFn() {
 		init_funs();
 	};
 	
+	// Function for aspect ratio
+	updateAspectRatio = function() {
+		var aspectRatio = (graphicsDevice.width / graphicsDevice.height);
+		if(aspectRatio !== camera.aspectRatio) {
+			camera.aspectRatio = 16/9;	// Keep mine 16/9 ratio (1920/1080 that is)
+			camera.updateProjectionMatrix();
+		}
+		camera.updateViewProjectionMatrix();	
+	};
+	
+	//exeute from init
 	function init_funs(){
 		CreateFloorShape();
 		PreLoadObjects();
@@ -587,6 +995,8 @@ TurbulenzEngine.onload = function onloadFn() {
 		//var testve = mathDevice.v3Build(0, 0, 0);
 		//console.log(testve);
 	}
+	
+	//exeute from mappingTable
 	function init_assest(){
 		init_animation_load();
 	}
@@ -621,11 +1031,15 @@ TurbulenzEngine.onload = function onloadFn() {
 		//var animations = animationManager.getAll();
 		//console.log(animations);
 		mesh = protolib.loadMesh({mesh: "models/duck.dae"});
+		meshes.push(mesh);
+		console.log(mesh);
+		//mesh.setSize([5,10,15]);
+		//mesh.setPosition([20,25,30]);
 		selectcube = protolib.loadMesh({mesh: "models/basecube.dae"});
 		selectcube.setSize(mathDevice.v3Build(0.5, 0.5, 0.5));
 		//character = protolib.loadMesh({mesh: "models/anime_low_poly_gender_20131128.dae"});	
-		console.log(scene);
-		console.log(selectcube);
+		//console.log(scene);
+		//console.log(selectcube);
 	}
 	
 	function BuildBlockFloor(){
@@ -727,8 +1141,10 @@ TurbulenzEngine.onload = function onloadFn() {
 		}
 		
 		if(bfound == true){
-			scene.removeRootNode(sceneobject);
+			//remove collisoin from the physicsManager
 			physicsManager.deletePhysicsNode(physicsobject);
+			//remove scene object
+			scene.removeRootNode(sceneobject);
 		}
 		
 		
@@ -761,8 +1177,6 @@ TurbulenzEngine.onload = function onloadFn() {
 		
 		//physicsManager.deletePhysicsNode(_physicsNode);
 	}
-	
-	
 	
 	CreatePhysicsCube = function(){
 		idxobj += 1;
@@ -1316,6 +1730,87 @@ TurbulenzEngine.onload = function onloadFn() {
 		
 	}
 	
+	this.fnMeshes=function(){
+		return meshes;
+	};
+	
+	
+	var SceneNodes = this.FnSceneNodes = function (){
+		return scene;
+	};
+	
+	this.fndebugMode = function (){
+		if(debugMode == true){
+			debugMode = false;
+		}else{
+			debugMode = true;
+		}
+		return debugMode;
+	}
+	
+	this.fninput = function (){
+		if(binput == true){
+			binput = false;
+		}else{
+			binput = true;
+		}
+		return binput;
+	}
+	
+	this.fncameraController = function (){
+		if(bcameraController == true){
+			bcameraController = false;
+		}else{
+			bcameraController = true;
+		}
+		return bcameraController;
+	}
+	
+	this.fnGridSnap = function (){
+		if(bgridsnap == true){
+			bgridsnap = false;
+		}else{
+			bgridsnap = true;
+		}
+		return bgridsnap;
+	}
+	
+	this.fnsnaprot = function (){
+		if(bsnaprot == true){
+			bsnaprot = false;
+		}else{
+			bsnaprot = true;
+		}
+		return bsnaprot;
+	}
+	
+	this.fnsnapscale = function (){
+		if(bsnapscale == true){
+			bsnapscale = false;
+		}else{
+			bsnapscale = true;
+		}
+		return bsnapscale;
+	}
+	
+	this.fnphysics = function (){
+		if(bphysics == true){
+			bphysics = false;
+		}else{
+			bphysics = true;
+		}
+		return bphysics;
+	}
+	
+	this.fnworld = function (){
+		if(bworld == true){
+			bworld = false;
+		}else{
+			bworld = true;
+		}
+		return bworld;
+	}
+	
 	//===========================================
 	// Public Access End
 	//===========================================
@@ -1401,32 +1896,45 @@ TurbulenzEngine.onload = function onloadFn() {
 			characterController.update(deltaTime);
 			//console.log("controller update...");
 		}
-		
-		inputDevice.update();
+		if(binput == true){
+			inputDevice.update();
+		}
 		if(mouseForces.pickedBody) {
             // If we're dragging a body don't apply the movement to the camera
             cameraController.pitch = 0;
             cameraController.turn = 0;
             cameraController.step = 0;
         }
-		
-		cameraController.update();
+		if(bcameraController == true){
+			cameraController.update();
+		}
         var deviceWidth = graphicsDevice.width;
         var deviceHeight = graphicsDevice.height;
+		DrawText("screen:"+deviceWidth+":"+deviceHeight,20,10);
+		
+		updateAspectRatio();
+		
+		/*
         var aspectRatio = (deviceWidth / deviceHeight);
         if(aspectRatio !== camera.aspectRatio) {
             camera.aspectRatio = aspectRatio;
             camera.updateProjectionMatrix();
         }
         camera.updateViewProjectionMatrix();
+		*/
 		numContacts = 0;
 		mouseForces.update(dynamicsWorld, camera, 0.1);
 		handleForces.update(dynamicsWorld, camera, 0.1);
-		dynamicsWorld.update(deltaTime);
-        physicsManager.update(deltaTime);
+		if(bworld == true){
+			dynamicsWorld.update(deltaTime);
+		}
+		if(bphysics == true){
+			physicsManager.update(deltaTime);
+		}
 		
-		DrawText("scene rootNodes: "+scene.rootNodes.length,50,10);
-		DrawText("physics Nodes: "+physicsManager.physicsNodes.length,50,30);
+		
+		DrawText("scene rootNodes: "+scene.rootNodes.length,10,30);
+		DrawText("physics Nodes: "+physicsManager.physicsNodes.length,10,40);
 		
 		//var mousePos = protolib.getMousePosition();
 		var pos = mathDevice.v3Build(0, 0, 0);
@@ -1441,20 +1949,6 @@ TurbulenzEngine.onload = function onloadFn() {
 		
 		pos = handleForces.pickRayFrom;
 		dir = handleForces.pickRayTo;
-		
-		//DrawText("cam pos: x:"+pos[0],50,100);
-		//DrawText("cam pos: y:"+pos[1],50,110);
-		//DrawText("cam pos: z:"+pos[2],50,120);
-		//DrawText("cam fir: x:"+dir[0],50,130);
-		//DrawText("cam fir: y:"+dir[1],50,140);
-		//DrawText("cam fir: z:"+dir[2],50,150);
-		//var fpoint  = mathDevice.v3Build(0, 0, 0);
-		//if(camera != null){
-			//fpoint = camera.getFrustumFarPoints();
-		// }
-		//DrawText("fpoint fir: x:"+fpoint[0],50,130);
-		//DrawText("fpoint fir: y:"+fpoint[1],50,150);
-		//DrawText("fpoint fir: z:"+fpoint[2],50,170);
 		
 		var rayHit = dynamicsWorld.rayTest({
 			from: pos,
@@ -1527,14 +2021,17 @@ TurbulenzEngine.onload = function onloadFn() {
 					//mesh.setPosition(hpos);			
 				}
 				
-				if (selectcube !=null){
-					selectcube.setPosition(hpos);	
-				}
+				
 				if(bgridsnap == true){
 					rayhit_set = hpos;
 				}else{
 					rayhit_set = pickPos;
 				}
+				
+				if (selectcube !=null){
+					selectcube.setPosition(rayhit_set);	
+				}
+				
 				face_normal_set = norPos;
 			}
 		}
@@ -1555,12 +2052,6 @@ TurbulenzEngine.onload = function onloadFn() {
 			draw2D.end();
 		}
 		
-		// if (mesh){
-			//mesh.getRotationMatrix(rotationMatrix);
-			//mathDevice.m43Mul(rotationMatrix, rotationAngleMatrix, rotationMatrix);
-			//mesh.setRotationMatrix(rotationMatrix);
-		// }
-		
 	};
 	
 	protolib = Protolib.create({
@@ -1569,7 +2060,8 @@ TurbulenzEngine.onload = function onloadFn() {
 		//enableDynamicUI: true
 	});
 	
-	protolib.setPostDraw(function() {
+	//protolib.setPostDraw(function() {
+		//floor.render(graphicsDevice, camera);
 		//DrawText("setPostDraw" , 10,70);
 		//console.log("setPostDraw");
 		//graphicsDevice.clear(clearColor);
@@ -1579,13 +2071,15 @@ TurbulenzEngine.onload = function onloadFn() {
 			//drawCrosshair();
 			//drawContacts();
 			//draw2D.end();
-	});
+	// });
 	
-	protolib.setPostRendererDraw(function() {
+	//protolib.setPostRendererDraw(function() {
 		//DrawText("setPostRendererDraw" , 10,90);
 		//console.log("setPostRendererDraw");
 		//graphicsDevice.clear(clearColor);
-	 });
+		//floor.render(graphicsDevice, camera);
+	// });
+	 
 	
 	protolib.setPreDraw(function floorRenderFn() {
 		//graphicsDevice.clear(clearColor);
@@ -1630,3 +2124,4 @@ TurbulenzEngine.onload = function onloadFn() {
 	
 	return this;
 };
+

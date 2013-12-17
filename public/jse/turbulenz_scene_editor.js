@@ -246,9 +246,12 @@ TurbulenzEngine.onload = function onloadFn()
         }
 		
         cameraController.update();
+		//graphicsDevice.width = 800;
+		//graphicsDevice.height = 600;
         var deviceWidth = graphicsDevice.width;
         var deviceHeight = graphicsDevice.height;
-        var aspectRatio = (deviceWidth / deviceHeight);
+        //var aspectRatio = (deviceWidth / deviceHeight);
+        var aspectRatio = (16 / 9);
         if(aspectRatio !== camera.aspectRatio) {
             camera.aspectRatio = aspectRatio;
             camera.updateProjectionMatrix();
@@ -296,7 +299,9 @@ TurbulenzEngine.onload = function onloadFn()
 					}
 					var titleHeight = 0.75;
 					//segmentFont(55, 50, "Point", titleHeight);
-					segmentFont(55, 80, "Hello World", titleHeight);
+					segmentFont(55, 10, "Hello World", titleHeight);
+					
+					segmentFont(55, 20, "Screen:"+deviceWidth+":"+deviceHeight, titleHeight);
 				}
             }
             drawCrosshair();
@@ -626,8 +631,6 @@ TurbulenzEngine.onload = function onloadFn()
 		console.log(sobj);
 		
 	}
-	
-	
 	
     var gameSessionCreated = function gameSessionCreatedFn(gameSession) {
         mappingTable = TurbulenzServices.createMappingTable(requestHandler, gameSession, mappingTableReceived);		

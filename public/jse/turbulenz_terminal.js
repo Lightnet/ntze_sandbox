@@ -31,9 +31,9 @@ helptext += "[[gib;#FF9999;#000]spawn [cube,mesh]], ";
 $(function() {
 	$('#term_console').terminal(
 		function(command, term) {
-			//console.log(command);
-			//console.log(term);
-			//console.log(term.get_prompt());
+			console.log(command);
+			console.log(term);
+			console.log(term.get_prompt());
 			if(command == 'help'){
 				
 				var textinfp = "";
@@ -109,27 +109,15 @@ $(function() {
 				}
 			}
 			
-			if((command == 'scene')){
+			if((command == 'engine')){
 				if(turbulenz_app !=null){
-						turbulenz_app.ShowSceneFuns();
+					console.log(engine);
 				}
 			}
 			
-			if((command == 'shader')){
+			if((command == 'dscene')){
 				if(turbulenz_app !=null){
-						turbulenz_app.Showshader();
-				}
-			}
-			
-			if((command == 'shader2d')){
-				if(turbulenz_app !=null){
-						turbulenz_app.Showshader2d();
-				}
-			}
-			
-			if((command == 'animations')){
-				if(turbulenz_app !=null){
-						turbulenz_app.GetAnimations();
+						turbulenz_app.displaysceneobject();
 				}
 			}
 			
@@ -141,7 +129,7 @@ $(function() {
 			}
 			
 			var args = command.split(" ");
-			//console.log(args);
+			console.log(args);
 			//console.log(args.join(" "));
 			//console.log(command);
 			//console.log("args[0]: " + args[0]);
@@ -158,13 +146,16 @@ $(function() {
 						turbulenz_app.SpawnMesh();
 					}
 				}
-				
-				if(args[1] == "duck"){
-					if(turbulenz_app !=null){
-						turbulenz_app.CloneMeshDuck();
-					}
+			}
+			
+			if(args[0] == "find"){
+				if(args[1] != null){
+					turbulenz_app.findsceneobject(args[1]);
 				}
 			}
+			
+			
+			
 			
 		},
 		{
